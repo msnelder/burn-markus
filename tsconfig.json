@@ -19,7 +19,8 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    "components/plaid-link.js"
+    "components/plaid-link.js",
+    "pages/index.tsx"
   ],
   "exclude": ["node_modules"]
 }

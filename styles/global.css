@@ -518,11 +518,17 @@ Buttons
   font-size: var(--font-size-s);
 }
 
+.button:disabled {
+  opacity: 0.4;
+  box-shadow: none;
+}
+
 /*
 Forms: Input - Text
 --------------------------- */
 input[type="text"],
-input[type="email"] {
+input[type="email"],
+input[type="number"] {
   all: unset;
   box-sizing: border-box;
   height: 2rem; /* 32px */
@@ -536,17 +542,20 @@ input[type="email"] {
   font-weight: var(--font-medium);
 }
 input[type="text"]::placeholder,
-input[type="email"]::placeholder {
+input[type="email"]::placeholder,
+input[type="number"]::placeholder {
   color: var(--gray-500);
 }
 input[type="text"]:focus,
-input[type="email"]:focus {
+input[type="email"]:focus,
+input[type="number"]::focus {
   border-color: var(--yellow-400);
   box-shadow: 0 0 0 2px var(--yellow-400);
 }
 
 input[type="text"].input-large,
-input[type="email"].input-large {
+input[type="email"].input-large,
+input[type="number"].input-large {
   height: 2.5rem; /* 40px */
   padding-left: calc(var(--spacer) * 4);
   padding-right: calc(var(--spacer) * 4);

@@ -1,3 +1,45 @@
 .api-key-input {
   width: 25rem;
 }
+
+.actions {
+  display: flex;
+  padding-bottom: 2.5rem;
+}
+
+.month-layout {
+  display: flex;
+  column-gap: 3rem;
+  width: 100%;
+}
+
+.month {
+  width: 100%;
+}
+
+.amount-total {
+  padding-bottom: calc(var(--spacer) * 2);
+  border-bottom: 1px solid var(--gray-400);
+}
+
+.transaction-list {
+  padding-top: calc(var(--spacer) * 2);
+}
+
+.transaction-item {
+  display: flex;
+  padding-top: calc(var(--spacer) * 1.5);
+  font-size: var(--font-size-xs);
+}
+
+.transaction-amount {
+  width: 100%;
+  text-align: right;
+}
+
+.transaction-date {
+  flex-grow: 0;
+  flex-shrink: 0;
+  color: var(--gray-600);
+  font-size: var(--font-size-xxs);
+}
