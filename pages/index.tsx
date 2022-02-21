@@ -5,6 +5,7 @@ import clsx from "clsx";
 import { formatUSD } from "../utils/format";
 import styles from "./index.module.css";
 import PlaidLink from "../components/simple-plaid-link";
+import Chart from "../components/chart";
 
 export default function Home() {
   const [accounts, setAccounts] = useState<[] | null>(null);
@@ -12,6 +13,7 @@ export default function Home() {
   const [transactions, setTransactions] = useState<[] | null>([]);
   const [history, setHistory] = useState<any>([]);
   const [projection, setProjection] = useState<any>([]);
+  const [chartData, setChartData] = useState<any>([]);
 
   type Transaction = {
     transaction_id: string;
@@ -68,6 +70,8 @@ export default function Home() {
   const createTransactionBuckets = () => {
     let bucketMonth = "";
     let buckets = [];
+
+    // Loop through all of the transactions from every account
     transactions.map((transaction: Transaction) => {
       let transactionMonth = moment(transaction.date).format("YYYY-MM");
       // If it's a new month, create a new array for that month as a "bucket"
@@ -79,20 +83,36 @@ export default function Home() {
           transactions: [],
           amounts: [],
           total: 0,
+          balance: 0,
         };
         dateBucket["month"] = bucketMonth;
         buckets.unshift(dateBucket);
       }
 
-      // Put the transaction into its bucket
+      // Find the bucket this transaction belongs in
       let thisBucket = buckets.find(
         (bucket) => bucket.month === transactionMonth
       );
+      // Put the transaction in the bucket
       thisBucket.transactions.push(transaction);
+      // Put it's amount in the amounts array for easy calculation
       thisBucket.amounts.push(transaction.amount);
+      // Recaculate the total for the bucket
       thisBucket.total = thisBucket.amounts.reduce((a, b) => a + b, 0);
     });
+
+    // Compute the balance for each bucket based on current balance
+    for (let i = buckets.length - 1; i >= 0; i--) {
+      const bucket = buckets[i];
+      if (i === buckets.length - 1) {
+        bucket.balance = accountBalance;
+      } else {
+        bucket.balance = buckets[i + 1]["balance"] - bucket.total;
+      }
+    }
+
     setHistory({ buckets });
+    setChartData(buckets);
   };
 
   const createProjectedBuckets = (months: number) => {
@@ -103,7 +123,7 @@ export default function Home() {
     let balance = 0;
     let buckets = [];
 
-    // Get teh transaction totals from each historical bucket
+    // Get the transaction totals from each historical bucket
     history.buckets.map((bucket: Bucket) => {
       totals.push(bucket.total);
     });
@@ -111,14 +131,14 @@ export default function Home() {
     // Get the max value to set as the worst-case projected bucket toal
     baseTotal = Math.max(...totals);
     total = baseTotal + adjustment;
-    balance = accountBalance - total;
+    balance = accountBalance + total;
 
     for (let i = 0; i < months; i++) {
       let newMonth = moment().add(i, "M").format("YYYY-MM");
 
       // Set the balance to the current total minus the previous bucket's balance
       if (i > 0) {
-        balance = buckets[i - 1]["balance"] - total;
+        balance = buckets[i - 1]["balance"] + total;
       }
 
       buckets.push({
@@ -131,21 +151,39 @@ export default function Home() {
       });
     }
     setProjection({ buckets });
+    setChartData(history.buckets.concat(buckets));
   };
 
   const updateBucketTotal = (month: string, adjustment: string) => {
+    // Find the bucket this adjustment happened in
     let buckets = projection.buckets;
-    let bucketIndex = buckets.findIndex((bucket) => bucket.month === month);
-    let bucket = buckets[bucketIndex];
-    let nextBucket = buckets[bucketIndex + 1];
+    let adjustedBucketIndex = buckets.findIndex(
+      (bucket) => bucket.month === month
+    );
+    let bucket = buckets[adjustedBucketIndex];
+    // Create an array with the buckets you have to update subsequently
+    let remainginBuckets = buckets.slice(adjustedBucketIndex + 1);
 
     // Update the current bucket according to the latest adjustment
-    // Conver the adjustment from a string to a number
+    // Convert the adjustment from a string to a number
     bucket["adjustment"] = ~~adjustment;
     bucket["total"] = bucket["base_total"] + ~~adjustment;
-    bucket["balance"] = accountBalance - bucket["total"];
 
-    // TO-DO - Change the balance on the subsequent buckets
+    // Set the new balance for the bucket and subsequent buckets
+    if (adjustedBucketIndex > 0) {
+      bucket["balance"] =
+        buckets[adjustedBucketIndex - 1]["balance"] + bucket["total"];
+    } else {
+      bucket["balance"] = accountBalance + bucket["total"];
+    }
+
+    // Start with the next bucket in the list
+    // Loop through each bucket, and update the balance based on the previous bucket
+
+    for (let i = adjustedBucketIndex + 1; i <= remainginBuckets.length; i++) {
+      buckets[i]["balance"] = buckets[i - 1]["balance"] + buckets[i]["total"];
+    }
+
     setProjection({ buckets });
   };
 
@@ -188,6 +226,8 @@ export default function Home() {
       </header>
 
       <main>
+        <Chart data={chartData} xAxisKey="month" areaKey="balance" />
+
         <div className={styles["balance-header"]}>
           <div className={clsx(styles["transaction-date"])}>
             Available Balance (All Accounts)
@@ -209,6 +249,14 @@ export default function Home() {
                   <div>{moment(bucket.month).format("MMMM - YYYY")}</div>
                   <div className={styles["amount-total"]}>
                     {formatUSD(bucket.total, { maximumFractionDigits: 2 })}
+                  </div>
+                  <div
+                    className={clsx(
+                      styles["transaction-date"],
+                      "text-green-500"
+                    )}
+                  >
+                    {formatUSD(bucket.balance, { maximumFractionDigits: 2 })}
                   </div>
                   <ul className={styles["transaction-list"]}>
                     {bucket.transactions.map((transaction: Transaction) => (
