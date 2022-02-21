@@ -250,8 +250,24 @@ Text Sizes
   color: var(--gray-900);
 }
 
-.text-yellow-100 {
-  color: var(--yellow-100);
+.text-green-100 {
+  color: var(--green-100);
+}
+.text-green-200 {
+  color: var(--green-200);
+}
+.text-green-300 {
+  color: var(--green-300);
+}
+.text-green-400 {
+  color: var(--green-400);
+}
+.text-green-500 {
+  color: var(--green-500);
+}
+
+.text-green-100 {
+  color: var(--green-100);
 }
 .text-yellow-200 {
   color: var(--yellow-200);
@@ -384,7 +400,6 @@ body {
   overflow-x: hidden;
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
-  padding: 1.5rem;
 }
 
 ::-webkit-scrollbar {

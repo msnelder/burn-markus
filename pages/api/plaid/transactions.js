@@ -35,12 +35,11 @@ export default async function handler(req, res) {
       access_token,
       start_date: threeMonthsAgo,
       end_date: lastDayOfLastMonth,
-      // start_date: thirtyDaysAgo,
-      // end_date: today,
     });
     const transactions = response.data.transactions;
+    const accounts = response.data.accounts;
 
-    res.status(201).json({ transactions });
+    res.status(201).json({ accounts, transactions });
   } catch (error) {
     res.status(500).json({ msg: "There was an error reaching the Plaid API" });
   }

@@ -1,5 +1,7 @@
-.api-key-input {
-  width: 25rem;
+.header {
+  padding-top: 1.25rem;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
 }
 
 .actions {
@@ -7,14 +9,25 @@
   padding-bottom: 2.5rem;
 }
 
+.balance-header {
+  padding-bottom: 1.25rem;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+
 .month-layout {
   display: flex;
   column-gap: 3rem;
   width: 100%;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  overflow-x: scroll;
 }
 
 .month {
-  width: 100%;
+  flex-grow: 0;
+  flex-shrink: 0;
+  width: calc(var(--spacer) * 40);
 }
 
 .amount-total {
@@ -32,14 +45,19 @@
   font-size: var(--font-size-xs);
 }
 
-.transaction-amount {
+.transaction-date {
   width: 100%;
+  color: var(--gray-600);
+  font-size: var(--font-size-xxs);
+}
+
+.transaction-amount {
+  flex-grow: 0;
+  flex-shrink: 0;
   text-align: right;
 }
 
-.transaction-date {
-  flex-grow: 0;
-  flex-shrink: 0;
-  color: var(--gray-600);
-  font-size: var(--font-size-xxs);
+input[type="number"].adjustment-input {
+  min-width: none;
+  width: 100%;
 }

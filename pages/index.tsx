@@ -7,15 +7,41 @@ import styles from "./index.module.css";
 import PlaidLink from "../components/simple-plaid-link";
 
 export default function Home() {
-  const [transactions, setTransactions] = useState<any | null>([]);
-  const [transactionBuckets, setTransactionBuckets] = useState<any | null>([]);
-  const [projectedBuckets, setProjectedBuckets] = useState<any | null>([]);
+  const [accounts, setAccounts] = useState<[] | null>(null);
+  const [accountBalance, setAccountBalance] = useState<number | null>(0);
+  const [transactions, setTransactions] = useState<[] | null>([]);
+  const [history, setHistory] = useState<any>([]);
+  const [projection, setProjection] = useState<any>([]);
+
+  type Transaction = {
+    transaction_id: string;
+    date: string;
+    amount: number;
+  };
+
+  type Bucket = {
+    id: string;
+    month: string;
+    transactions: [];
+    amounts: [];
+    base_total: number;
+    adjustment: number;
+    total: number;
+    balance: number;
+  };
+
+  type Account = {
+    account_id: string;
+    name: string;
+    balances: {
+      available: number;
+      current: number;
+    };
+  };
 
   useEffect(() => {
-    console.log("Transactions:", transactions);
-    console.log("History:", transactionBuckets);
-    console.log("Projection:", projectedBuckets);
-  });
+    createTransactionBuckets();
+  }, [transactions]); // <-- dependency array
 
   const getTransactions = async () => {
     const accessToken = sessionStorage.getItem("access_token");
@@ -24,20 +50,31 @@ export default function Home() {
       body: JSON.stringify({ access_token: accessToken }),
     });
     let data = await response.json();
-    data = data.transactions;
 
     return data;
   };
 
+  const sumAccountBalances = (accounts: []) => {
+    let balances = [];
+    let totalBalance = 0;
+    accounts.map((account: Account) => {
+      balances.push(account.balances.available);
+    });
+
+    totalBalance = balances.reduce((a, b) => a + b, 0);
+    setAccountBalance(totalBalance);
+  };
+
   const createTransactionBuckets = () => {
-    let bucketMonth;
+    let bucketMonth = "";
     let buckets = [];
-    transactions.map((t) => {
-      let transactionMonth = moment(t.date).format("YYYY-MM");
+    transactions.map((transaction: Transaction) => {
+      let transactionMonth = moment(transaction.date).format("YYYY-MM");
       // If it's a new month, create a new array for that month as a "bucket"
       if (transactionMonth != bucketMonth) {
         bucketMonth = transactionMonth;
         let dateBucket = {
+          id: Math.floor(Math.random() * 9000).toString(),
           month: "",
           transactions: [],
           amounts: [],
@@ -51,46 +88,65 @@ export default function Home() {
       let thisBucket = buckets.find(
         (bucket) => bucket.month === transactionMonth
       );
-      thisBucket.transactions.push(t);
-      thisBucket.amounts.push(t.amount);
+      thisBucket.transactions.push(transaction);
+      thisBucket.amounts.push(transaction.amount);
       thisBucket.total = thisBucket.amounts.reduce((a, b) => a + b, 0);
     });
-    setTransactionBuckets(buckets);
+    setHistory({ buckets });
   };
 
-  const createProjectedBuckets = (months: 3) => {
+  const createProjectedBuckets = (months: number) => {
     let totals = [];
     let baseTotal = 0;
     let adjustment = 0;
+    let total = 0;
+    let balance = 0;
     let buckets = [];
 
-    transactionBuckets.map((b) => {
-      totals.push(b.total);
+    // Get teh transaction totals from each historical bucket
+    history.buckets.map((bucket: Bucket) => {
+      totals.push(bucket.total);
     });
 
+    // Get the max value to set as the worst-case projected bucket toal
     baseTotal = Math.max(...totals);
+    total = baseTotal + adjustment;
+    balance = accountBalance - total;
 
     for (let i = 0; i < months; i++) {
       let newMonth = moment().add(i, "M").format("YYYY-MM");
+
+      // Set the balance to the current total minus the previous bucket's balance
+      if (i > 0) {
+        balance = buckets[i - 1]["balance"] - total;
+      }
+
       buckets.push({
+        id: Math.floor(Math.random() * 90000).toString(),
         month: newMonth,
         base_total: baseTotal,
         adjustment: adjustment,
-        total: baseTotal + adjustment,
+        total: total,
+        balance: balance,
       });
     }
-    console.log(buckets);
-    setProjectedBuckets(buckets);
+    setProjection({ buckets });
   };
 
   const updateBucketTotal = (month: string, adjustment: string) => {
-    let buckets = projectedBuckets;
+    let buckets = projection.buckets;
     let bucketIndex = buckets.findIndex((bucket) => bucket.month === month);
-    buckets[bucketIndex]["adjustment"] = ~~adjustment;
-    buckets[bucketIndex]["total"] =
-      buckets[bucketIndex]["base_total"] + ~~adjustment;
-    setProjectedBuckets(buckets);
-    console.log("New Projection:", projectedBuckets);
+    let bucket = buckets[bucketIndex];
+    let nextBucket = buckets[bucketIndex + 1];
+
+    // Update the current bucket according to the latest adjustment
+    // Conver the adjustment from a string to a number
+    bucket["adjustment"] = ~~adjustment;
+    bucket["total"] = bucket["base_total"] + ~~adjustment;
+    bucket["balance"] = accountBalance - bucket["total"];
+
+    // TO-DO - Change the balance on the subsequent buckets
+    setProjection({ buckets });
   };
 
   return (
@@ -100,7 +156,7 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <header>
+      <header className={styles["header"]}>
         <h1 className="title">Burn</h1>
 
         <p className="description">Connect your bank account to get started</p>
@@ -109,7 +165,9 @@ export default function Home() {
           <button
             onClick={() => {
               getTransactions().then((data) => {
-                setTransactions(data);
+                setTransactions(data.transactions);
+                setAccounts(data.accounts);
+                sumAccountBalances(data.accounts);
               });
             }}
             className="button"
@@ -119,19 +177,9 @@ export default function Home() {
 
           <button
             onClick={() => {
-              createTransactionBuckets();
+              createProjectedBuckets(5);
             }}
-            disabled={transactions.length === 0}
-            className="button"
-          >
-            Generate History
-          </button>
-
-          <button
-            onClick={() => {
-              createProjectedBuckets(3);
-            }}
-            disabled={transactions.length === 0}
+            disabled={transactions.length <= 0}
             className="button"
           >
             Generate Projections
@@ -139,49 +187,80 @@ export default function Home() {
         </div>
       </header>
 
-      <main className={styles["month-layout"]}>
-        {transactionBuckets.map((b) => (
-          <div key={b.month} className={styles["month"]}>
-            <div>{moment(b.month).format("MMMM - YYYY")}</div>
-            <div className={styles["amount-total"]}>
-              {formatUSD(b.total, { maximumFractionDigits: 2 })}
-            </div>
-            <ul className={styles["transaction-list"]}>
-              {b.transactions.map((t) => (
-                <li
-                  key={t.transaction_id}
-                  className={clsx(styles["transaction-item"])}
-                >
-                  <div className={clsx(styles["transaction-date"])}>
-                    {t.date}
-                  </div>
-                  <div className={styles["transaction-amount"]}>
-                    {formatUSD(t.amount, { maximumFractionDigits: 2 })}
-                  </div>
-                </li>
-              ))}
-            </ul>
+      <main>
+        <div className={styles["balance-header"]}>
+          <div className={clsx(styles["transaction-date"])}>
+            Available Balance (All Accounts)
           </div>
-        ))}
-        {projectedBuckets.map((b) => (
-          <div key={b.month} className={styles["month"]}>
-            <div>{moment(b.month).format("MMMM - YYYY")}</div>
-            <div className={styles["amount-total"]}>
-              {formatUSD(b.total, {
-                maximumFractionDigits: 2,
-              })}
-            </div>
-            <ul className={styles["transaction-list"]}>
-              <input
-                type="number"
-                value={b.adjustments}
-                onChange={(e) => {
-                  updateBucketTotal(b.month, e.target.value);
-                }}
-              />
-            </ul>
-          </div>
-        ))}
+          <h2>
+            {accounts
+              ? formatUSD(accountBalance, {
+                  maximumFractionDigits: 2,
+                })
+              : formatUSD(0, {
+                  maximumFractionDigits: 2,
+                })}
+          </h2>
+        </div>
+        <div className={styles["month-layout"]}>
+          {history.buckets
+            ? history.buckets.map((bucket: Bucket) => (
+                <div key={bucket.month} className={styles["month"]}>
+                  <div>{moment(bucket.month).format("MMMM - YYYY")}</div>
+                  <div className={styles["amount-total"]}>
+                    {formatUSD(bucket.total, { maximumFractionDigits: 2 })}
+                  </div>
+                  <ul className={styles["transaction-list"]}>
+                    {bucket.transactions.map((transaction: Transaction) => (
+                      <li
+                        key={transaction.transaction_id}
+                        className={clsx(styles["transaction-item"])}
+                      >
+                        <div className={clsx(styles["transaction-date"])}>
+                          {moment(transaction.date).format("MM-DD")}
+                        </div>
+                        <div className={styles["transaction-amount"]}>
+                          {formatUSD(transaction.amount, {
+                            maximumFractionDigits: 2,
+                          })}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))
+            : null}
+          {projection.buckets
+            ? projection.buckets.map((bucket: Bucket) => (
+                <div key={bucket.id} className={styles["month"]}>
+                  <div>{moment(bucket.month).format("MMMM - YYYY")}</div>
+                  <div className={styles["amount-total"]}>
+                    {formatUSD(bucket.total, {
+                      maximumFractionDigits: 2,
+                    })}
+                  </div>
+                  <div
+                    className={clsx(
+                      styles["transaction-date"],
+                      "text-green-500"
+                    )}
+                  >
+                    {formatUSD(bucket.balance, { maximumFractionDigits: 2 })}
+                  </div>
+                  <div className={styles["transaction-list"]}>
+                    <input
+                      className={styles["adjustment-input"]}
+                      type="number"
+                      defaultValue={bucket.adjustment || "0"}
+                      onChange={(e) => {
+                        updateBucketTotal(bucket.month, e.target.value);
+                      }}
+                    />
+                  </div>
+                </div>
+              ))
+            : null}
+        </div>
       </main>
     </div>
   );

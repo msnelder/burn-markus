@@ -4,9 +4,6 @@ import { usePlaidLink, PlaidLinkOnSuccess } from "react-plaid-link";
 
 const PlaidLink = (props) => {
   const [token, setToken] = useState<string | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [accounts, setAccounts] = useState<any | null>(null);
-  const [transactions, setTransactions] = useState<any | null>(null);
 
   // get link_token from your server when component mounts
   React.useEffect(() => {
