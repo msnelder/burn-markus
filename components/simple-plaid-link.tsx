@@ -24,7 +24,7 @@ const PlaidLink = (props) => {
         body: JSON.stringify({ public_token: publicToken }),
       });
       const data = await response.json();
-      console.log("data:", data);
+
       // All I need to do here is send the access_token back to the server and store it
       sessionStorage.setItem("access_token", data.access_token);
       sessionStorage.setItem("accounts", data.accounts);
