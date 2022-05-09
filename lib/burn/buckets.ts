@@ -9,7 +9,7 @@ const createHistoricalBuckets = (
   let buckets: Bucket[] = [];
 
   // Loop through all of the transactions from every account
-  transactions.map((transaction: Transaction) => {
+  transactions?.map((transaction: Transaction) => {
     let transactionMonth = moment(transaction.date).format("YYYY-MM");
     // If it's a new month, create a new array for that month as a "bucket"
     if (transactionMonth != bucketMonth) {

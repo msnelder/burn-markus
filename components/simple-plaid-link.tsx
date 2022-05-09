@@ -2,7 +2,7 @@ import React, { useCallback, useState } from "react";
 
 import { usePlaidLink, PlaidLinkOnSuccess } from "react-plaid-link";
 
-const PlaidLink = (props) => {
+const PlaidLink = ({ setAccessToken }: { setAccessToken: any }) => {
   const [token, setToken] = useState<string | null>(null);
 
   // get link_token from your server when component mounts
@@ -26,8 +26,7 @@ const PlaidLink = (props) => {
       const data = await response.json();
 
       // All I need to do here is send the access_token back to the server and store it
-      sessionStorage.setItem("access_token", data.access_token);
-      sessionStorage.setItem("accounts", data.accounts);
+      setAccessToken(data.access_token);
     };
     getAccounts();
   }, []);

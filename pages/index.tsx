@@ -12,8 +12,10 @@ import {
   createProjectedBuckets,
 } from "../lib/burn/buckets";
 import styles from "./index.module.css";
+import { useSessionStorage } from "../lib/hooks/useSessionStorage";
 
 export default function Home() {
+  const [accessToken, setAccessToken] = useSessionStorage("access_token", null);
   const [accounts, setAccounts] = useState<Account[] | null>(null);
   const [accountBalance, setAccountBalance] = useState<number | null>(0);
   const [transactions, setTransactions] = useState<Transaction[] | null>(null);
@@ -31,7 +33,7 @@ export default function Home() {
   const sumAccountBalances = (accounts: Account[]) => {
     let balances: number[] = [];
     let accountBalance: number = 0;
-    accounts.map((account: Account) => {
+    accounts?.map((account: Account) => {
       balances.push(account.balances.available);
     });
 
@@ -100,18 +102,18 @@ export default function Home() {
   };
 
   useEffect(() => {
-    if (sessionStorage.getItem("access_token")) {
-      if (transactions) {
-        createMonthlyBuckets(transactions, accountBalance);
-      } else {
-        getTransactions().then((data) => {
-          let accountBalance: number = sumAccountBalances(data.accounts);
-          setAccountBalance(accountBalance);
-          setTransactions(data.transactions);
-          setAccounts(data.accounts);
-          createMonthlyBuckets(data.transactions, accountBalance);
-        });
-      }
+    if (!accessToken) return;
+    getTransactions(accessToken).then((data) => {
+      let accountBalance: number = sumAccountBalances(data.accounts);
+      setAccountBalance(accountBalance);
+      setTransactions(data.transactions);
+      setAccounts(data.accounts);
+    });
+  }, [accessToken]); // <-- dependency array
+
+  useEffect(() => {
+    if (transactions) {
+      createMonthlyBuckets(transactions, accountBalance);
     }
   }, [transactions]); // <-- dependency array
 
@@ -127,7 +129,7 @@ export default function Home() {
 
         <p className="description">Connect your bank account to get started</p>
         <div className={styles["actions"]}>
-          <PlaidLink />
+          <PlaidLink setAccessToken={setAccessToken} />
         </div>
       </header>
 
