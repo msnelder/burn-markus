@@ -2,7 +2,13 @@ import React, { useCallback, useState } from "react";
 
 import { usePlaidLink, PlaidLinkOnSuccess } from "react-plaid-link";
 
-const PlaidLink = ({ setAccessToken }: { setAccessToken: any }) => {
+const PlaidLink = ({
+  setAccessToken,
+  accessToken,
+}: {
+  setAccessToken: any;
+  accessToken: string;
+}) => {
   const [token, setToken] = useState<string | null>(null);
 
   // get link_token from your server when component mounts
@@ -42,7 +48,7 @@ const PlaidLink = ({ setAccessToken }: { setAccessToken: any }) => {
     <>
       <button
         onClick={() => open()}
-        disabled={!ready}
+        disabled={!ready || accessToken !== null}
         className="button button-primary"
       >
         Connect a bank account

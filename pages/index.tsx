@@ -129,7 +129,10 @@ export default function Home() {
 
         <p className="description">Connect your bank account to get started</p>
         <div className={styles["actions"]}>
-          <PlaidLink setAccessToken={setAccessToken} />
+          <PlaidLink
+            setAccessToken={setAccessToken}
+            accessToken={accessToken}
+          />
         </div>
       </header>
 
