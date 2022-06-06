@@ -30,3 +30,8 @@ export type Bucket = {
   total: number;
   balance: number;
 };
+
+export type Foo = {
+  // ...
+};
+export default Foo;
