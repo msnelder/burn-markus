@@ -5,7 +5,7 @@ import clsx from "clsx";
 import { formatUSD } from "../utils/format";
 import Chart from "../components/chart";
 import PlaidLink from "../components/simple-plaid-link";
-import { Account, Transaction, Bucket } from "./types";
+import { Account, Transaction, Bucket } from "../types/types";
 import { getTransactions } from "../lib/plaid/transactions";
 import {
   createHistoricalBuckets,

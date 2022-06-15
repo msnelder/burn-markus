@@ -1,4 +1,4 @@
-import { Transaction, Bucket } from "../../pages/types";
+import { Transaction, Bucket } from "../../types/types";
 import moment from "moment";
 
 const createHistoricalBuckets = (
