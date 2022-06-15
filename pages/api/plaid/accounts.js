@@ -1,23 +1,11 @@
 import { Configuration, PlaidApi, PlaidEnvironments } from "plaid";
 
-let PLAID_SECRET;
-switch (process.env.PLAID_ENV) {
-  case "sandbox":
-    PLAID_SECRET = process.env.PLAID_SECRET_SANDBOX;
-    break;
-  case "development":
-    PLAID_SECRET = process.env.PLAID_SECRET_DEVELOPMENT;
-    break;
-  case "production":
-    PLAID_SECRET = process.env.PLAID_SECRET;
-}
-
 const configuration = new Configuration({
-  basePath: PlaidEnvironments.sandbox,
+  basePath: PlaidEnvironments[process.env.PLAID_ENV],
   baseOptions: {
     headers: {
       "PLAID-CLIENT-ID": process.env.PLAID_CLIENT_ID,
-      "PLAID-SECRET": PLAID_SECRET,
+      "PLAID-SECRET": process.env.PLAID_SECRET,
     },
   },
 });

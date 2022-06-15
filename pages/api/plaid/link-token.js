@@ -1,23 +1,11 @@
 import { Configuration, PlaidApi, PlaidEnvironments } from "plaid";
 
-let PLAID_SECRET;
-switch (process.env.PLAID_ENV) {
-  case "sandbox":
-    PLAID_SECRET = process.env.PLAID_SECRET_SANDBOX;
-    break;
-  case "development":
-    PLAID_SECRET = process.env.PLAID_SECRET_DEVELOPMENT;
-    break;
-  case "production":
-    PLAID_SECRET = process.env.PLAID_SECRET;
-}
-
 const configuration = new Configuration({
-  basePath: PlaidEnvironments.sandbox,
+  basePath: PlaidEnvironments[process.env.PLAID_ENV],
   baseOptions: {
     headers: {
       "PLAID-CLIENT-ID": process.env.PLAID_CLIENT_ID,
-      "PLAID-SECRET": PLAID_SECRET,
+      "PLAID-SECRET": process.env.PLAID_SECRET,
     },
   },
 });
@@ -28,7 +16,7 @@ export default async function handler(req, res) {
   try {
     const response = await client.linkTokenCreate({
       user: {
-        client_user_id: "123-test-me",
+        client_user_id: "12345",
       },
       client_name: "Burn App",
       products: ["auth", "transactions"],
@@ -40,9 +28,14 @@ export default async function handler(req, res) {
         },
       },
     });
-
     res.status(201).json(response.data);
   } catch (error) {
-    res.status(500).json({ msg: "There was an error reaching the Plaid API" });
+    res.status(500).json({
+      msg: "There was an error reaching the Plaid API",
+      basePathOrig: `${PlaidEnvironments.sandbox}`,
+      basePath: `${PlaidEnvironments[process.env.PLAID_ENV]}`,
+      env: `${process.env.PLAID_ENV}`,
+      secret: `${process.env.PLAID_SECRET}`,
+    });
   }
 }

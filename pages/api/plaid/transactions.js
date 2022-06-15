@@ -2,7 +2,7 @@ import { Configuration, PlaidApi, PlaidEnvironments } from "plaid";
 import moment from "moment";
 
 const configuration = new Configuration({
-  basePath: PlaidEnvironments.sandbox,
+  basePath: PlaidEnvironments[process.env.PLAID_ENV],
   baseOptions: {
     headers: {
       "PLAID-CLIENT-ID": process.env.PLAID_CLIENT_ID,
