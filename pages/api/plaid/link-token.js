@@ -32,10 +32,6 @@ export default async function handler(req, res) {
   } catch (error) {
     res.status(500).json({
       msg: "There was an error reaching the Plaid API",
-      basePathOrig: `${PlaidEnvironments.sandbox}`,
-      basePath: `${PlaidEnvironments[process.env.PLAID_ENV]}`,
-      env: `${process.env.PLAID_ENV}`,
-      secret: `${process.env.PLAID_SECRET}`,
     });
   }
 }

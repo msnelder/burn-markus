@@ -1,15 +1,28 @@
 .header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding-top: 1.25rem;
   padding-left: 1.25rem;
   padding-right: 1.25rem;
+  padding-bottom: 1rem;
+}
+
+.title {
+  font-weight: 900;
+}
+
+.description {
+  margin-bottom: 0.25rem;
+  font-size: var(--font-size-xs);
 }
 
 .actions {
   display: flex;
-  padding-bottom: 2.5rem;
 }
 
 .balance-header {
+  padding-top: 1rem;
   padding-bottom: 1.25rem;
   padding-left: 1.25rem;
   padding-right: 1.25rem;
@@ -17,7 +30,7 @@
 
 .month-layout {
   display: flex;
-  column-gap: 3rem;
+  column-gap: 4rem;
   width: 100%;
   padding-left: 1.25rem;
   padding-right: 1.25rem;
@@ -28,7 +41,7 @@
 .month {
   flex-grow: 0;
   flex-shrink: 0;
-  width: calc(var(--spacer) * 40);
+  width: calc(var(--spacer) * 50);
 }
 
 .amount-total {
@@ -57,8 +70,30 @@
   flex-shrink: 0;
   text-align: right;
 }
+.transaction-amount.income {
+  color: var(--green);
+}
 
-input[type="number"].adjustment-input {
-  min-width: none;
-  width: 100%;
+input[type="text"].adjustment-input-name {
+  flex-grow: 1;
+  flex-shrink: 1;
+  min-width: 0;
+  width: 50%;
+  padding-left: 0;
+  padding-right: 0;
+  background-color: transparent;
+  border: none;
+  font-size: var(--font-size-xxs);
+}
+
+input[type="number"].adjustment-input-value {
+  flex-grow: 2;
+  flex-shrink: 1;
+  height: 1.5rem;
+  min-width: 0;
+  width: 50%;
+}
+
+.button-adjustment-add {
+  margin-top: 0.25rem;
 }

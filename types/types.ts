@@ -20,6 +20,11 @@ export type Transaction = {
   amount: number;
 };
 
+export type Adjustment = {
+  name: string;
+  amount: number;
+};
+
 export type Bucket = {
   id: string;
   month: string;
@@ -27,6 +32,7 @@ export type Bucket = {
   amounts: number[];
   base_total: number;
   adjustment: number;
+  adjustments: Adjustment[];
   total: number;
   balance: number;
 };

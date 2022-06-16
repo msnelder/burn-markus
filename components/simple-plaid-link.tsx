@@ -18,7 +18,6 @@ const PlaidLink = ({
         method: "POST",
       });
       const data = await response.json();
-      console.log(data);
       setToken(data.link_token);
     };
     createLinkToken();

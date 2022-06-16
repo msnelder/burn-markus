@@ -519,15 +519,6 @@ Buttons
   color: var(--yellow-400);
 }
 
-.button-text {
-  background-color: transparent;
-  border-color: transparent;
-  box-shadow: none;
-}
-.button-text:hover {
-  background-color: rgba(0, 0, 0, 0.04);
-}
-
 .button-large {
   height: 2.5rem; /* 40px */
   padding-left: calc(var(--spacer) * 4);
@@ -535,9 +526,29 @@ Buttons
   font-size: var(--font-size-s);
 }
 
+.button-small {
+  height: 1.5rem; /* 40px */
+  padding-left: calc(var(--spacer) * 2);
+  padding-right: calc(var(--spacer) * 2);
+  font-size: var(--font-size-xxs);
+}
+
 .button:disabled {
   opacity: 0.4;
   box-shadow: none;
+}
+
+.button-text {
+  padding-left: 0;
+  background-color: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  transition: all 150ms ease-in-out;
+}
+.button-text:hover {
+  padding-left: calc(var(--spacer) * 3);
+  background-color: rgba(0, 0, 0, 0.04);
+  transition: all 200ms ease-in-out;
 }
 
 /*
@@ -584,6 +595,8 @@ Forms: Input Groups
 --------------------------- */
 .input-group-inline {
   display: flex;
+  align-items: center;
+  column-gap: 0.5rem;
   width: 100%;
 }
 

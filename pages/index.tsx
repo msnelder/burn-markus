@@ -5,11 +5,12 @@ import clsx from "clsx";
 import { formatUSD } from "../utils/format";
 import Chart from "../components/chart";
 import PlaidLink from "../components/simple-plaid-link";
-import { Account, Transaction, Bucket } from "../types/types";
+import { Account, Transaction, Bucket, Adjustment } from "../types/types";
 import { getTransactions } from "../lib/plaid/transactions";
 import {
   createHistoricalBuckets,
   createProjectedBuckets,
+  getBucketIndex,
 } from "../lib/burn/buckets";
 import styles from "./index.module.css";
 import { useSessionStorage } from "../lib/hooks/useSessionStorage";
@@ -19,8 +20,6 @@ export default function Home() {
   const [accounts, setAccounts] = useState<Account[] | null>(null);
   const [accountBalance, setAccountBalance] = useState<number | null>(0);
   const [transactions, setTransactions] = useState<Transaction[] | null>(null);
-  const [historicalBuckets, setHistoricalBuckets] = useState<Bucket[]>([]);
-  const [projectedBuckets, setProjectedBuckets] = useState<Bucket[]>([]);
   const [monthlyBuckets, setMonthyBuckets] = useState<{
     historical: Bucket[];
     projected: Bucket[];
@@ -28,7 +27,6 @@ export default function Home() {
     historical: [],
     projected: [],
   });
-  const [concatonatedBuckets, setConcatonatedBuckets] = useState<Bucket[]>([]);
 
   const sumAccountBalances = (accounts: Account[]) => {
     let balances: number[] = [];
@@ -54,51 +52,72 @@ export default function Home() {
       historicalBuckets,
       accountBalance
     );
-    setHistoricalBuckets(historicalBuckets);
-    setProjectedBuckets(projectedBuckets);
-    setConcatonatedBuckets(historicalBuckets.concat(projectedBuckets));
+
     setMonthyBuckets({
       historical: historicalBuckets,
       projected: projectedBuckets,
     });
   };
 
-  const updateBucketTotal = (month: string, adjustment: string) => {
+  const addAdjustment = (index: number) => {
     // Find the bucket this adjustment happened in
-    let buckets = monthlyBuckets.projected;
-    let adjustedBucketIndex = buckets.findIndex(
-      (bucket) => bucket.month === month
-    );
-    let bucket = buckets[adjustedBucketIndex];
+
+    setMonthyBuckets({
+      ...monthlyBuckets,
+      projected: monthlyBuckets.projected.map((month, bucketIndex) => {
+        if (bucketIndex === index) {
+          month["adjustments"] = [
+            ...month["adjustments"],
+            {
+              name: null,
+              amount: 0,
+            },
+          ];
+        }
+        return month;
+      }),
+    });
+  };
+
+  const calculateAdjustments = (
+    bucketIndex: number,
+    amount: string,
+    adjustmentIndex: number
+  ) => {
+    // Find the bucket this adjustment happened in and get it's index
+    let adjustmentList = [];
+    let buckets = [...monthlyBuckets.projected];
+    let bucket = buckets[bucketIndex];
     // Create an array with the buckets you have to update subsequently
-    let remainginBuckets = buckets.slice(adjustedBucketIndex + 1);
+    let remaining = buckets.slice(bucketIndex + 1);
 
     // Update the current bucket according to the latest adjustment
     // Convert the adjustment from a string to a number
-    bucket["adjustment"] = ~~adjustment;
-    bucket["total"] = bucket["base_total"] + ~~adjustment;
+    bucket["adjustments"][adjustmentIndex].amount = ~~amount;
+    bucket["adjustments"].map((adjustment: Adjustment) => {
+      adjustmentList.push(adjustment.amount);
+    });
+    bucket["total"] =
+      bucket["base_total"] +
+      adjustmentList.reduce((partialSum, a) => partialSum + a, 0);
 
     // Set the new balance for the bucket and subsequent buckets
-    if (adjustedBucketIndex > 0) {
-      bucket["balance"] =
-        buckets[adjustedBucketIndex - 1]["balance"] + bucket["total"];
+    if (bucketIndex > 0) {
+      bucket["balance"] = buckets[bucketIndex - 1]["balance"] + bucket["total"];
     } else {
       bucket["balance"] = accountBalance + bucket["total"];
     }
 
     // Start with the next bucket in the list
     // Loop through each bucket, and update the balance based on the previous bucket
-
-    for (let i = adjustedBucketIndex + 1; i <= remainginBuckets.length; i++) {
+    for (let i = bucketIndex + 1; i <= remaining.length; i++) {
       buckets[i]["balance"] = buckets[i - 1]["balance"] + buckets[i]["total"];
     }
 
     setMonthyBuckets({
-      historical: historicalBuckets,
+      ...monthlyBuckets,
       projected: buckets,
     });
-    setProjectedBuckets(buckets);
-    setConcatonatedBuckets(historicalBuckets.concat(buckets));
   };
 
   useEffect(() => {
@@ -117,6 +136,8 @@ export default function Home() {
     }
   }, [transactions]); // <-- dependency array
 
+  console.log(monthlyBuckets);
+
   return (
     <div className="container">
       <Head>
@@ -127,7 +148,6 @@ export default function Home() {
       <header className={styles["header"]}>
         <h1 className="title">Burn</h1>
 
-        <p className="description">Connect your bank account to get started</p>
         <div className={styles["actions"]}>
           <PlaidLink
             setAccessToken={setAccessToken}
@@ -137,7 +157,11 @@ export default function Home() {
       </header>
 
       <main>
-        <Chart data={concatonatedBuckets} xAxisKey="month" areaKey="balance" />
+        <Chart
+          data={monthlyBuckets.historical.concat(monthlyBuckets.projected)}
+          xAxisKey="month"
+          areaKey="balance"
+        />
 
         {/* start: balance-header */}
         <div className={styles["balance-header"]}>
@@ -173,6 +197,7 @@ export default function Home() {
                   >
                     {formatUSD(bucket.balance, { maximumFractionDigits: 2 })}
                   </div>
+                  {/* start: transaction-list */}
                   <ul className={styles["transaction-list"]}>
                     {bucket.transactions.map((transaction: Transaction) => (
                       <li
@@ -182,19 +207,28 @@ export default function Home() {
                         <div className={clsx(styles["transaction-date"])}>
                           {moment(transaction.date).format("MM-DD")}
                         </div>
-                        <div className={styles["transaction-amount"]}>
-                          {formatUSD(transaction.amount, {
+                        <div
+                          className={clsx(
+                            styles["transaction-amount"],
+                            transaction.amount < 1 && styles["income"],
+                            transaction.amount > 1 && styles["expense"]
+                          )}
+                        >
+                          {formatUSD(transaction.amount * -1, {
                             maximumFractionDigits: 2,
                           })}
                         </div>
                       </li>
                     ))}
                   </ul>
+                  {/* end: transaction-list */}
                 </div>
               ))
             : null}
+
+          {/* start: projected-months */}
           {monthlyBuckets.projected
-            ? monthlyBuckets.projected.map((bucket: Bucket) => (
+            ? monthlyBuckets.projected.map((bucket: Bucket, bucketIndex) => (
                 <div key={bucket.id} className={styles["month"]}>
                   <div>{moment(bucket.month).format("MMMM - YYYY")}</div>
                   <div className={styles["amount-total"]}>
@@ -210,19 +244,69 @@ export default function Home() {
                   >
                     {formatUSD(bucket.balance, { maximumFractionDigits: 2 })}
                   </div>
+
+                  {/* start: adjustment-list */}
+                  {/* TODO: 
+                    - [ ] UUID on adjustment (npm add UUID) "UUIDv4"
+                    - [ ] Enable / Disable adjustment
+                    - [ ] Replace bucket IDs on bucket
+                    - [ ] Fix the bucket math
+                    - [ ] Move away from indexes wherever possible
+                    - [ ] Restructure adjustments
+                          - Move adjustments out of buckets
+                          adjustments = {
+                            bucketUUID: [...], 
+                            bucketUUID2: [...],
+                          }
+                    - [ ] Store adjustments in local storage
+                    - [ ] Move to reducers
+                    - [ ] Storing the adjustments - move to stupabase
+                   */}
                   <div className={styles["transaction-list"]}>
-                    <input
-                      className={styles["adjustment-input"]}
-                      type="number"
-                      defaultValue={bucket.adjustment || "0"}
-                      onChange={(e) => {
-                        updateBucketTotal(bucket.month, e.target.value);
-                      }}
-                    />
+                    {bucket.adjustments.map(
+                      (adjustment: Adjustment, adjustmentIndex) => (
+                        <div
+                          key={adjustmentIndex}
+                          className="input-group-inline"
+                        >
+                          <input
+                            className={styles["adjustment-input-name"]}
+                            type="text"
+                            defaultValue={adjustment.name || null}
+                            placeholder={`Adjustment ${adjustmentIndex + 1}`}
+                          />
+                          <input
+                            className={styles["adjustment-input-value"]}
+                            type="number"
+                            defaultValue={adjustment.amount || "0"}
+                            onChange={(e) => {
+                              calculateAdjustments(
+                                bucketIndex,
+                                e.target.value,
+                                adjustmentIndex
+                              );
+                            }}
+                          />
+                        </div>
+                      )
+                    )}
+                  </div>
+                  {/* end: adjustment-list */}
+                  <div
+                    className={clsx(
+                      "button button-text button-small",
+                      styles["button-adjustment-add"]
+                    )}
+                    onClick={(e) => {
+                      addAdjustment(bucketIndex);
+                    }}
+                  >
+                    Add Adjustment
                   </div>
                 </div>
               ))
             : null}
+          {/* end: projected-months */}
         </div>
         {/* end: monthly-layout */}
       </main>

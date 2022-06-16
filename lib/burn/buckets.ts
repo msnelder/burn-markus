@@ -1,6 +1,11 @@
 import { Transaction, Bucket } from "../../types/types";
 import moment from "moment";
 
+const getBucketIndex = (bucketMonth: string, buckets: Bucket[]) => {
+  let index = buckets.findIndex((bucket) => bucket.month === bucketMonth);
+  return index;
+};
+
 const createHistoricalBuckets = (
   transactions: Transaction[],
   accountBalance: number
@@ -21,6 +26,7 @@ const createHistoricalBuckets = (
         amounts: [],
         base_total: 0,
         adjustment: 0,
+        adjustments: [],
         total: 0,
         balance: 0,
       };
@@ -46,7 +52,7 @@ const createHistoricalBuckets = (
     if (i === buckets.length - 1) {
       bucket.balance = accountBalance;
     } else {
-      bucket.balance = buckets[i + 1]["balance"] - bucket.total;
+      bucket.balance = buckets[i + 1]["balance"] + bucket.total;
     }
   }
 
@@ -61,6 +67,12 @@ const createProjectedBuckets = (
   let totals = [];
   let baseTotal = 0;
   let adjustment = 0;
+  let adjustments = [
+    {
+      name: null,
+      amount: 0,
+    },
+  ];
   let total = 0;
   let balance = 0;
   let projectedBuckets = [];
@@ -71,7 +83,7 @@ const createProjectedBuckets = (
   });
 
   // Get the max value to set as the worst-case projected bucket toal
-  baseTotal = Math.max(...totals);
+  baseTotal = Math.min(...totals);
   total = baseTotal + adjustment;
   balance = accountBalance + total;
 
@@ -88,6 +100,7 @@ const createProjectedBuckets = (
       month: newMonth,
       base_total: baseTotal,
       adjustment: adjustment,
+      adjustments: adjustments,
       total: total,
       balance: balance,
     });
@@ -96,4 +109,4 @@ const createProjectedBuckets = (
   return projectedBuckets;
 };
 
-export { createHistoricalBuckets, createProjectedBuckets };
+export { getBucketIndex, createHistoricalBuckets, createProjectedBuckets };

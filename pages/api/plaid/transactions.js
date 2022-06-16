@@ -30,6 +30,9 @@ export default async function handler(req, res) {
     const threeMonthsAgo = moment(firstOfCurrentMonth)
       .subtract(3, "months")
       .format("YYYY-MM-DD");
+    // const sixMonthsAgo = moment(firstOfCurrentMonth)
+    //   .subtract(6, "months")
+    //   .format("YYYY-MM-DD");
 
     const response = await client.transactionsGet({
       access_token,
