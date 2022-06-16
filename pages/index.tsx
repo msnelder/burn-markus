@@ -1,11 +1,18 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
 import moment from "moment";
+import { v4 as uuidv4 } from "uuid";
 import clsx from "clsx";
 import { formatUSD } from "../utils/format";
 import Chart from "../components/chart";
 import PlaidLink from "../components/simple-plaid-link";
-import { Account, Transaction, Bucket, Adjustment } from "../types/types";
+import {
+  Account,
+  Transaction,
+  Bucket,
+  Adjustment,
+  Adjustments,
+} from "../types/types";
 import { getTransactions } from "../lib/plaid/transactions";
 import {
   createHistoricalBuckets,
@@ -27,6 +34,7 @@ export default function Home() {
     historical: [],
     projected: [],
   });
+  const [adjustments, setAdjustments] = useState<Adjustments | {}>({});
 
   const sumAccountBalances = (accounts: Account[]) => {
     let balances: number[] = [];
@@ -59,47 +67,71 @@ export default function Home() {
     });
   };
 
-  const addAdjustment = (index: number) => {
-    // Find the bucket this adjustment happened in
+  const createAdjustment = (modifiedBucket: Bucket) => {
+    let adjustmentId = uuidv4();
+    let adjustment = {
+      id: adjustmentId,
+      name: null,
+      amount: 0,
+      bucket_id: modifiedBucket.id,
+    };
 
+    setAdjustments((adjustments) => {
+      if (adjustments[modifiedBucket.id]) {
+        adjustments[modifiedBucket.id] = [
+          ...adjustments[modifiedBucket.id],
+          adjustment,
+        ];
+      } else {
+        adjustments[modifiedBucket.id] = [adjustment];
+      }
+
+      return adjustments;
+    });
+
+    // Find the bucket this adjustment happened in
     setMonthyBuckets({
       ...monthlyBuckets,
-      projected: monthlyBuckets.projected.map((month, bucketIndex) => {
-        if (bucketIndex === index) {
-          month["adjustments"] = [
-            ...month["adjustments"],
+      projected: monthlyBuckets.projected.map((projectedBucket) => {
+        if (projectedBucket.id === modifiedBucket.id) {
+          projectedBucket["adjustments"] = [
+            ...projectedBucket["adjustments"],
             {
+              id: adjustmentId,
               name: null,
               amount: 0,
+              bucket_id: projectedBucket.id,
             },
           ];
         }
-        return month;
+        return projectedBucket;
       }),
     });
   };
 
-  const calculateAdjustments = (
-    bucketIndex: number,
+  const updateAdjustments = (
+    bucket: Bucket,
     amount: string,
-    adjustmentIndex: number
+    adjustment: Adjustment
   ) => {
     // Find the bucket this adjustment happened in and get it's index
-    let adjustmentList = [];
     let buckets = [...monthlyBuckets.projected];
-    let bucket = buckets[bucketIndex];
     // Create an array with the buckets you have to update subsequently
+    let bucketIndex = getBucketIndex(bucket, buckets);
     let remaining = buckets.slice(bucketIndex + 1);
+    // Create an adjustment sum
+    let adjustmentList = [];
 
     // Update the current bucket according to the latest adjustment
     // Convert the adjustment from a string to a number
-    bucket["adjustments"][adjustmentIndex].amount = ~~amount;
+    buckets[bucketIndex]["adjustments"][adjustmentIndex].amount = ~~amount;
+
     bucket["adjustments"].map((adjustment: Adjustment) => {
       adjustmentList.push(adjustment.amount);
     });
+
     bucket["total"] =
-      bucket["base_total"] +
-      adjustmentList.reduce((partialSum, a) => partialSum + a, 0);
+      bucket["projected_total"] + adjustmentList.reduce((a, b) => a + b, 0);
 
     // Set the new balance for the bucket and subsequent buckets
     if (bucketIndex > 0) {
@@ -137,6 +169,7 @@ export default function Home() {
   }, [transactions]); // <-- dependency array
 
   console.log(monthlyBuckets);
+  console.log(adjustments);
 
   return (
     <div className="container">
@@ -247,10 +280,8 @@ export default function Home() {
 
                   {/* start: adjustment-list */}
                   {/* TODO: 
-                    - [ ] UUID on adjustment (npm add UUID) "UUIDv4"
+                    - [ ] Fix how totals are calculated after adjustment
                     - [ ] Enable / Disable adjustment
-                    - [ ] Replace bucket IDs on bucket
-                    - [ ] Fix the bucket math
                     - [ ] Move away from indexes wherever possible
                     - [ ] Restructure adjustments
                           - Move adjustments out of buckets
@@ -263,33 +294,35 @@ export default function Home() {
                     - [ ] Storing the adjustments - move to stupabase
                    */}
                   <div className={styles["transaction-list"]}>
-                    {bucket.adjustments.map(
-                      (adjustment: Adjustment, adjustmentIndex) => (
-                        <div
-                          key={adjustmentIndex}
-                          className="input-group-inline"
-                        >
-                          <input
-                            className={styles["adjustment-input-name"]}
-                            type="text"
-                            defaultValue={adjustment.name || null}
-                            placeholder={`Adjustment ${adjustmentIndex + 1}`}
-                          />
-                          <input
-                            className={styles["adjustment-input-value"]}
-                            type="number"
-                            defaultValue={adjustment.amount || "0"}
-                            onChange={(e) => {
-                              calculateAdjustments(
-                                bucketIndex,
-                                e.target.value,
-                                adjustmentIndex
-                              );
-                            }}
-                          />
-                        </div>
-                      )
-                    )}
+                    {adjustments[bucket.id]
+                      ? adjustments[bucket.id].map(
+                          (adjustment: Adjustment, i) => (
+                            <div
+                              key={adjustment.id}
+                              className="input-group-inline"
+                            >
+                              <input
+                                className={styles["adjustment-input-name"]}
+                                type="text"
+                                defaultValue={adjustment.name || null}
+                                placeholder={`Adjustment ${i + 1}`}
+                              />
+                              <input
+                                className={styles["adjustment-input-value"]}
+                                type="number"
+                                defaultValue={adjustment.amount || "0"}
+                                onChange={(e) => {
+                                  updateAdjustments(
+                                    bucket,
+                                    e.target.value,
+                                    adjustment
+                                  );
+                                }}
+                              />
+                            </div>
+                          )
+                        )
+                      : null}
                   </div>
                   {/* end: adjustment-list */}
                   <div
@@ -298,7 +331,7 @@ export default function Home() {
                       styles["button-adjustment-add"]
                     )}
                     onClick={(e) => {
-                      addAdjustment(bucketIndex);
+                      createAdjustment(bucket);
                     }}
                   >
                     Add Adjustment

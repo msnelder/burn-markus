@@ -1,8 +1,9 @@
 import { Transaction, Bucket } from "../../types/types";
+import { v4 as uuidv4 } from "uuid";
 import moment from "moment";
 
-const getBucketIndex = (bucketMonth: string, buckets: Bucket[]) => {
-  let index = buckets.findIndex((bucket) => bucket.month === bucketMonth);
+const getBucketIndex = (desiredBucket: Bucket, buckets: Bucket[]) => {
+  let index = buckets.findIndex((bucket) => bucket.id === desiredBucket.id);
   return index;
 };
 
@@ -20,14 +21,13 @@ const createHistoricalBuckets = (
     if (transactionMonth != bucketMonth) {
       bucketMonth = transactionMonth;
       let dateBucket: Bucket = {
-        id: Math.floor(Math.random() * 9000).toString(),
+        id: uuidv4(),
         month: "",
         transactions: [],
         amounts: [],
-        base_total: 0,
-        adjustment: 0,
         adjustments: [],
         total: 0,
+        projected_total: 0,
         balance: 0,
       };
       dateBucket["month"] = bucketMonth;
@@ -39,9 +39,9 @@ const createHistoricalBuckets = (
       (bucket) => bucket.month === transactionMonth
     );
     // Put the transaction in the bucket
-    thisBucket.transactions.push(transaction);
+    thisBucket.transactions = [...thisBucket.transactions, transaction];
     // Put it's amount in the amounts array for easy calculation
-    thisBucket.amounts.push(transaction.amount);
+    thisBucket.amounts = [...thisBucket.amounts, transaction.amount * -1];
     // Recaculate the total for the bucket
     thisBucket.total = thisBucket.amounts.reduce((a, b) => a + b, 0);
   });
@@ -52,7 +52,7 @@ const createHistoricalBuckets = (
     if (i === buckets.length - 1) {
       bucket.balance = accountBalance;
     } else {
-      bucket.balance = buckets[i + 1]["balance"] + bucket.total;
+      bucket.balance = buckets[i + 1]["balance"] - bucket.total;
     }
   }
 
@@ -60,19 +60,12 @@ const createHistoricalBuckets = (
 };
 
 const createProjectedBuckets = (
-  months: number,
+  projectedMonths: number,
   historicalBuckets: Bucket[],
   accountBalance: number
 ) => {
   let totals = [];
-  let baseTotal = 0;
-  let adjustment = 0;
-  let adjustments = [
-    {
-      name: null,
-      amount: 0,
-    },
-  ];
+  let projectedTotal = 0;
   let total = 0;
   let balance = 0;
   let projectedBuckets = [];
@@ -82,13 +75,18 @@ const createProjectedBuckets = (
     totals.push(bucket.total);
   });
 
-  // Get the max value to set as the worst-case projected bucket toal
-  baseTotal = Math.min(...totals);
-  total = baseTotal + adjustment;
+  // Get the min value to set as the worst-case projected bucket toal
+  projectedTotal = Math.min(...totals);
+
+  // Calculate the balance adjustments (there aren't any adjustment, I should probably remove that logic)
+  total = projectedTotal;
   balance = accountBalance + total;
 
-  for (let i = 0; i < months; i++) {
+  // Create the bucket
+  for (let i = 0; i < projectedMonths; i++) {
+    let bucketId = uuidv4();
     let newMonth = moment().add(i, "M").format("YYYY-MM");
+    let adjustments = [];
 
     // Set the balance to the current total minus the previous bucket's balance
     if (i > 0) {
@@ -96,12 +94,11 @@ const createProjectedBuckets = (
     }
 
     projectedBuckets.push({
-      id: Math.floor(Math.random() * 90000).toString(),
+      id: bucketId,
       month: newMonth,
-      base_total: baseTotal,
-      adjustment: adjustment,
       adjustments: adjustments,
       total: total,
+      projected_total: projectedTotal,
       balance: balance,
     });
   }
