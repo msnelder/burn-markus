@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Head from "next/head";
 import moment from "moment";
 import { v4 as uuidv4 } from "uuid";
@@ -14,11 +14,7 @@ import {
   Adjustments,
 } from "../types/types";
 import { getTransactions } from "../lib/plaid/transactions";
-import {
-  createHistoricalBuckets,
-  createProjectedBuckets,
-  getBucketIndex,
-} from "../lib/burn/buckets";
+import { getHistoricalBuckets, getProjectedBuckets } from "../lib/burn/buckets";
 import styles from "./index.module.css";
 import { useSessionStorage } from "../lib/hooks/useSessionStorage";
 
@@ -29,12 +25,23 @@ export default function Home() {
   const [transactions, setTransactions] = useState<Transaction[] | null>(null);
   const [monthlyBuckets, setMonthyBuckets] = useState<{
     historical: Bucket[];
-    projected: Bucket[];
   }>({
     historical: [],
-    projected: [],
   });
   const [adjustments, setAdjustments] = useState<Adjustments | {}>({});
+
+  /* TODO:
+    - [ ] Generate all projected months on fly
+    - [ ] Fix the account balance to exclude all expenses month-to-date
+    - [ ] Fix how totals are calculated after adjustment
+    - [ ] Move calculated fields to helper methods
+    - [ ] Enable / Disable adjustment
+    - [ ] Move away from indexes wherever possible
+    - [ ] Restructure adjustments
+    - [ ] Store adjustments in local storage
+    - [ ] Move to reducers
+    - [ ] Storing the adjustments - move to stupabase
+    */
 
   const sumAccountBalances = (accounts: Account[]) => {
     let balances: number[] = [];
@@ -51,106 +58,63 @@ export default function Home() {
     transactions: Transaction[],
     accountBalance: number
   ) => {
-    const historicalBuckets = await createHistoricalBuckets(
+    const historicalBuckets = await getHistoricalBuckets(
       transactions,
-      accountBalance
-    );
-    const projectedBuckets = await createProjectedBuckets(
-      6,
-      historicalBuckets,
       accountBalance
     );
 
     setMonthyBuckets({
       historical: historicalBuckets,
-      projected: projectedBuckets,
     });
   };
 
   const createAdjustment = (modifiedBucket: Bucket) => {
-    let adjustmentId = uuidv4();
-    let adjustment = {
-      id: adjustmentId,
+    let newAdjustment: Adjustment = {
+      id: uuidv4(),
       name: null,
       amount: 0,
       bucket_id: modifiedBucket.id,
     };
 
-    setAdjustments((adjustments) => {
-      if (adjustments[modifiedBucket.id]) {
-        adjustments[modifiedBucket.id] = [
-          ...adjustments[modifiedBucket.id],
-          adjustment,
-        ];
-      } else {
-        adjustments[modifiedBucket.id] = [adjustment];
-      }
-
-      return adjustments;
-    });
-
-    // Find the bucket this adjustment happened in
-    setMonthyBuckets({
-      ...monthlyBuckets,
-      projected: monthlyBuckets.projected.map((projectedBucket) => {
-        if (projectedBucket.id === modifiedBucket.id) {
-          projectedBucket["adjustments"] = [
-            ...projectedBucket["adjustments"],
-            {
-              id: adjustmentId,
-              name: null,
-              amount: 0,
-              bucket_id: projectedBucket.id,
-            },
-          ];
-        }
-        return projectedBucket;
-      }),
+    setAdjustments({
+      ...adjustments,
+      [modifiedBucket.month]: adjustments.hasOwnProperty(modifiedBucket.month)
+        ? [...adjustments[modifiedBucket.month], newAdjustment]
+        : [newAdjustment],
     });
   };
 
   const updateAdjustments = (
-    bucket: Bucket,
-    amount: string,
-    adjustment: Adjustment
+    modifiedBucket: Bucket,
+    newAmount: string,
+    updatedAdjustment: Adjustment
   ) => {
-    // Find the bucket this adjustment happened in and get it's index
-    let buckets = [...monthlyBuckets.projected];
-    // Create an array with the buckets you have to update subsequently
-    let bucketIndex = getBucketIndex(bucket, buckets);
-    let remaining = buckets.slice(bucketIndex + 1);
-    // Create an adjustment sum
-    let adjustmentList = [];
+    // Udpate the adjustments state
+    setAdjustments((adjustments) => {
+      adjustments[modifiedBucket.month].find(
+        (adjustment) => adjustment.id === updatedAdjustment.id
+      ).amount = ~~newAmount;
 
-    // Update the current bucket according to the latest adjustment
-    // Convert the adjustment from a string to a number
-    buckets[bucketIndex]["adjustments"][adjustmentIndex].amount = ~~amount;
-
-    bucket["adjustments"].map((adjustment: Adjustment) => {
-      adjustmentList.push(adjustment.amount);
+      return adjustments;
     });
 
-    bucket["total"] =
-      bucket["projected_total"] + adjustmentList.reduce((a, b) => a + b, 0);
-
-    // Set the new balance for the bucket and subsequent buckets
-    if (bucketIndex > 0) {
-      bucket["balance"] = buckets[bucketIndex - 1]["balance"] + bucket["total"];
-    } else {
-      bucket["balance"] = accountBalance + bucket["total"];
-    }
-
-    // Start with the next bucket in the list
-    // Loop through each bucket, and update the balance based on the previous bucket
-    for (let i = bucketIndex + 1; i <= remaining.length; i++) {
-      buckets[i]["balance"] = buckets[i - 1]["balance"] + buckets[i]["total"];
-    }
-
-    setMonthyBuckets({
-      ...monthlyBuckets,
-      projected: buckets,
-    });
+    const newAdjustments = { ...adjustments };
+    newAdjustments[modifiedBucket.month].find(
+      (adjustment) => adjustment.id === updatedAdjustment.id
+    ).amount = ~~newAmount;
+    setAdjustments(newAdjustments);
   };
+
+  const projectedBuckets = useMemo(
+    () =>
+      getProjectedBuckets(
+        6,
+        monthlyBuckets.historical,
+        adjustments,
+        accountBalance
+      ),
+    [monthlyBuckets, adjustments]
+  );
 
   useEffect(() => {
     if (!accessToken) return;
@@ -167,9 +131,6 @@ export default function Home() {
       createMonthlyBuckets(transactions, accountBalance);
     }
   }, [transactions]); // <-- dependency array
-
-  console.log(monthlyBuckets);
-  console.log(adjustments);
 
   return (
     <div className="container">
@@ -191,7 +152,7 @@ export default function Home() {
 
       <main>
         <Chart
-          data={monthlyBuckets.historical.concat(monthlyBuckets.projected)}
+          data={monthlyBuckets.historical.concat(projectedBuckets)}
           xAxisKey="month"
           areaKey="balance"
         />
@@ -260,9 +221,9 @@ export default function Home() {
             : null}
 
           {/* start: projected-months */}
-          {monthlyBuckets.projected
-            ? monthlyBuckets.projected.map((bucket: Bucket, bucketIndex) => (
-                <div key={bucket.id} className={styles["month"]}>
+          {projectedBuckets
+            ? projectedBuckets.map((bucket: Bucket) => (
+                <div key={bucket.month} className={styles["month"]}>
                   <div>{moment(bucket.month).format("MMMM - YYYY")}</div>
                   <div className={styles["amount-total"]}>
                     {formatUSD(bucket.total, {
@@ -278,24 +239,9 @@ export default function Home() {
                     {formatUSD(bucket.balance, { maximumFractionDigits: 2 })}
                   </div>
 
-                  {/* start: adjustment-list */}
-                  {/* TODO: 
-                    - [ ] Fix how totals are calculated after adjustment
-                    - [ ] Enable / Disable adjustment
-                    - [ ] Move away from indexes wherever possible
-                    - [ ] Restructure adjustments
-                          - Move adjustments out of buckets
-                          adjustments = {
-                            bucketUUID: [...], 
-                            bucketUUID2: [...],
-                          }
-                    - [ ] Store adjustments in local storage
-                    - [ ] Move to reducers
-                    - [ ] Storing the adjustments - move to stupabase
-                   */}
                   <div className={styles["transaction-list"]}>
-                    {adjustments[bucket.id]
-                      ? adjustments[bucket.id].map(
+                    {adjustments[bucket.month]
+                      ? adjustments[bucket.month].map(
                           (adjustment: Adjustment, i) => (
                             <div
                               key={adjustment.id}

@@ -38,11 +38,11 @@ export default function Chart({
   const off = gradientOffset();
 
   const moneyFormatter = (number) => {
-    if (number > 1000000000) {
+    if (number > 1000000000 || number < -1000000000) {
       return "$" + (number / 1000000000).toString() + "B";
-    } else if (number > 1000000) {
+    } else if (number > 1000000 || number < -1000000) {
       return "$" + (number / 1000000).toString() + "M";
-    } else if (number > 1000) {
+    } else if (number > 1000 || number < -1000) {
       return "$" + (number / 1000).toString() + "K";
     } else {
       return "$" + number.toString();
