@@ -25,7 +25,6 @@ export type Adjustment = {
   name: string;
   amount: number;
   bucket_id: string;
-  bucket_month: string;
 };
 
 export type Adjustments = {

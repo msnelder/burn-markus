@@ -8,6 +8,8 @@ import {
   YAxis,
 } from "recharts";
 
+import moment from "moment";
+
 export default function Chart({
   data,
   xAxisKey,
@@ -37,7 +39,7 @@ export default function Chart({
 
   const off = gradientOffset();
 
-  const moneyFormatter = (number) => {
+  const moneyFormatter = (number: number) => {
     if (number > 1000000000 || number < -1000000000) {
       return "$" + (number / 1000000000).toString() + "B";
     } else if (number > 1000000 || number < -1000000) {
@@ -47,6 +49,10 @@ export default function Chart({
     } else {
       return "$" + number.toString();
     }
+  };
+
+  const monthFormatter = (month: string) => {
+    return moment(month).format("MMMM - YYYY");
   };
 
   return (
@@ -63,7 +69,7 @@ export default function Chart({
         }}
       >
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey={xAxisKey} />
+        <XAxis dataKey={xAxisKey} tickFormatter={monthFormatter} />
         <YAxis tickFormatter={moneyFormatter} />
         <Tooltip />
         <defs>

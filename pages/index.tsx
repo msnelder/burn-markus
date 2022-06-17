@@ -6,13 +6,7 @@ import clsx from "clsx";
 import { formatUSD } from "../utils/format";
 import Chart from "../components/chart";
 import PlaidLink from "../components/simple-plaid-link";
-import {
-  Account,
-  Transaction,
-  Bucket,
-  Adjustment,
-  Adjustments,
-} from "../types/types";
+import { Account, Transaction, Bucket, Adjustment } from "../types/types";
 import { getTransactions } from "../lib/plaid/transactions";
 import { getHistoricalBuckets, getProjectedBuckets } from "../lib/burn/buckets";
 import styles from "./index.module.css";
@@ -32,6 +26,7 @@ export default function Home() {
   /* TODO:
     - [ ] Fix the account balance to exclude all expenses month-to-date
     - [ ] Enable / Disable adjustment
+    ===== Future State
     - [ ] Move to reducers
     - [ ] Storing the adjustments - move to stupabase
     */
@@ -65,7 +60,6 @@ export default function Home() {
       name: null,
       amount: 0,
       bucket_id: modifiedBucket.id,
-      bucket_month: modifiedBucket.month,
     };
 
     setAdjustments({
@@ -78,15 +72,24 @@ export default function Home() {
 
   const updateAdjustments = (
     modifiedBucket: Bucket,
-    newAmount: string,
-    updatedAdjustment: Adjustment
+    updatedAdjustment: Adjustment,
+    newAmount?: string,
+    newName?: string
   ) => {
     // Udpate the adjustments state
     const newAdjustments = { ...adjustments };
 
-    newAdjustments[modifiedBucket.month].find(
-      (adjustment) => adjustment.id === updatedAdjustment.id
-    ).amount = ~~newAmount;
+    if (newAmount) {
+      newAdjustments[modifiedBucket.month].find(
+        (adjustment) => adjustment.id === updatedAdjustment.id
+      ).amount = ~~newAmount;
+    }
+
+    if (newName) {
+      newAdjustments[modifiedBucket.month].find(
+        (adjustment) => adjustment.id === updatedAdjustment.id
+      ).name = newName;
+    }
 
     setAdjustments(newAdjustments);
   };
@@ -156,13 +159,11 @@ export default function Home() {
       </header>
 
       <main>
-        {historicalBuckets ? (
-          <Chart
-            data={historicalBuckets.concat(projectedBuckets)}
-            xAxisKey="month"
-            areaKey="balance"
-          />
-        ) : null}
+        <Chart
+          data={historicalBuckets?.concat(projectedBuckets)}
+          xAxisKey="month"
+          areaKey="balance"
+        />
 
         {/* start: balance-header */}
         <div className={styles["balance-header"]}>
@@ -262,6 +263,14 @@ export default function Home() {
                                 type="text"
                                 defaultValue={adjustment.name || null}
                                 placeholder={`Adjustment ${i + 1}`}
+                                onChange={(e) => {
+                                  updateAdjustments(
+                                    bucket,
+                                    adjustment,
+                                    undefined,
+                                    e.target.value
+                                  );
+                                }}
                               />
                               <input
                                 className={styles["adjustment-input-value"]}
@@ -270,8 +279,9 @@ export default function Home() {
                                 onChange={(e) => {
                                   updateAdjustments(
                                     bucket,
+                                    adjustment,
                                     e.target.value,
-                                    adjustment
+                                    undefined
                                   );
                                 }}
                               />
