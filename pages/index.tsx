@@ -99,15 +99,15 @@ export default function Home() {
     updatedAdjustment: Adjustment
   ) => {
     // Udpate the adjustments state
-    const newAdjustments = { ...adjustments };
+    let newAdjustments = { ...adjustments };
 
-    const filteredAdjustments = {
-      [modifiedBucket.month]: newAdjustments[modifiedBucket.month].filter(
-        (adjustment: Adjustment) => adjustment.id !== updatedAdjustment.id
-      ),
-    };
+    newAdjustments[modifiedBucket.month] = newAdjustments[
+      modifiedBucket.month
+    ].filter(
+      (adjustment: Adjustment) => adjustment.id !== updatedAdjustment.id
+    );
 
-    setAdjustments(filteredAdjustments);
+    setAdjustments(newAdjustments);
   };
 
   const projectedBuckets = useMemo(() => {
