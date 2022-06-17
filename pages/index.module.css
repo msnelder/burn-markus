@@ -74,6 +74,10 @@
   color: var(--green);
 }
 
+.adjustment-row {
+  position: relative;
+}
+
 input[type="text"].adjustment-input-name {
   flex-grow: 1;
   flex-shrink: 1;
@@ -93,6 +97,22 @@ input[type="number"].adjustment-input-value {
   height: 1.5rem;
   min-width: 0;
   width: 50%;
+}
+
+.adjustment-actions {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translate(100%, -50%);
+  transition: all 100ms ease-in-out;
+}
+.adjustment-row:hover .adjustment-actions {
+  visibility: visible;
+  opacity: 1;
+  transform: translate(50%, -50%);
+  transition: all 150ms ease-in-out;
 }
 
 .button-adjustment-add {

@@ -519,6 +519,10 @@ Buttons
   color: var(--yellow-400);
 }
 
+.button-round {
+  border-radius: 50%;
+}
+
 .button-large {
   height: 2.5rem; /* 40px */
   padding-left: calc(var(--spacer) * 4);
@@ -527,9 +531,16 @@ Buttons
 }
 
 .button-small {
-  height: 1.5rem; /* 40px */
+  height: 1.5rem; /* 24px */
   padding-left: calc(var(--spacer) * 2);
   padding-right: calc(var(--spacer) * 2);
+  font-size: var(--font-size-xxs);
+}
+
+.button-xsmall {
+  height: 1.125rem; /* 18px */
+  padding-left: calc(var(--spacer) * 1);
+  padding-right: calc(var(--spacer) * 1);
   font-size: var(--font-size-xxs);
 }
 

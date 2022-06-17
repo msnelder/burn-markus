@@ -81,7 +81,7 @@ const getProjectedBuckets = (
     let newMonth = moment().add(i, "M").format("YYYY-MM");
     let adjustmentTotal = 0;
 
-    if (adjustments[newMonth]) {
+    if (adjustments && adjustments[newMonth]) {
       adjustmentTotal = adjustments[newMonth].reduce(
         (accumulator, adjustment) => {
           return accumulator + adjustment.amount;

@@ -23,22 +23,15 @@ export default function Home() {
   const [accounts, setAccounts] = useState<Account[] | null>(null);
   const [accountBalance, setAccountBalance] = useState<number | null>(0);
   const [transactions, setTransactions] = useState<Transaction[] | null>(null);
-  const [monthlyBuckets, setMonthyBuckets] = useState<{
-    historical: Bucket[];
-  }>({
-    historical: [],
-  });
-  const [adjustments, setAdjustments] = useState<Adjustments | {}>({});
+  const [historicalBuckets, setHistoricalBuckets] = useState<Bucket[] | null>(
+    null
+  );
+  // const [adjustments, setAdjustments] = useState<Adjustments | {}>({});
+  const [adjustments, setAdjustments] = useSessionStorage("adjustments", null);
 
   /* TODO:
-    - [ ] Generate all projected months on fly
     - [ ] Fix the account balance to exclude all expenses month-to-date
-    - [ ] Fix how totals are calculated after adjustment
-    - [ ] Move calculated fields to helper methods
     - [ ] Enable / Disable adjustment
-    - [ ] Move away from indexes wherever possible
-    - [ ] Restructure adjustments
-    - [ ] Store adjustments in local storage
     - [ ] Move to reducers
     - [ ] Storing the adjustments - move to stupabase
     */
@@ -54,7 +47,7 @@ export default function Home() {
     return accountBalance;
   };
 
-  const createMonthlyBuckets = async (
+  const createHistoricalBuckets = async (
     transactions: Transaction[],
     accountBalance: number
   ) => {
@@ -63,9 +56,7 @@ export default function Home() {
       accountBalance
     );
 
-    setMonthyBuckets({
-      historical: historicalBuckets,
-    });
+    setHistoricalBuckets(historicalBuckets);
   };
 
   const createAdjustment = (modifiedBucket: Bucket) => {
@@ -74,11 +65,12 @@ export default function Home() {
       name: null,
       amount: 0,
       bucket_id: modifiedBucket.id,
+      bucket_month: modifiedBucket.month,
     };
 
     setAdjustments({
       ...adjustments,
-      [modifiedBucket.month]: adjustments.hasOwnProperty(modifiedBucket.month)
+      [modifiedBucket.month]: adjustments?.hasOwnProperty(modifiedBucket.month)
         ? [...adjustments[modifiedBucket.month], newAdjustment]
         : [newAdjustment],
     });
@@ -90,31 +82,42 @@ export default function Home() {
     updatedAdjustment: Adjustment
   ) => {
     // Udpate the adjustments state
-    setAdjustments((adjustments) => {
-      adjustments[modifiedBucket.month].find(
-        (adjustment) => adjustment.id === updatedAdjustment.id
-      ).amount = ~~newAmount;
-
-      return adjustments;
-    });
-
     const newAdjustments = { ...adjustments };
+
     newAdjustments[modifiedBucket.month].find(
       (adjustment) => adjustment.id === updatedAdjustment.id
     ).amount = ~~newAmount;
+
     setAdjustments(newAdjustments);
   };
 
-  const projectedBuckets = useMemo(
-    () =>
-      getProjectedBuckets(
+  const deleteAdjustment = (
+    modifiedBucket: Bucket,
+    updatedAdjustment: Adjustment
+  ) => {
+    // Udpate the adjustments state
+    const newAdjustments = { ...adjustments };
+
+    const filteredAdjustments = {
+      [modifiedBucket.month]: newAdjustments[modifiedBucket.month].filter(
+        (adjustment: Adjustment) => adjustment.id !== updatedAdjustment.id
+      ),
+    };
+
+    setAdjustments(filteredAdjustments);
+  };
+
+  const projectedBuckets = useMemo(() => {
+    if (historicalBuckets) {
+      let buckets: Bucket[] = getProjectedBuckets(
         6,
-        monthlyBuckets.historical,
+        historicalBuckets,
         adjustments,
         accountBalance
-      ),
-    [monthlyBuckets, adjustments]
-  );
+      );
+      return buckets;
+    }
+  }, [historicalBuckets, adjustments]);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -128,9 +131,11 @@ export default function Home() {
 
   useEffect(() => {
     if (transactions) {
-      createMonthlyBuckets(transactions, accountBalance);
+      createHistoricalBuckets(transactions, accountBalance);
     }
   }, [transactions]); // <-- dependency array
+
+  console.log(adjustments);
 
   return (
     <div className="container">
@@ -151,11 +156,13 @@ export default function Home() {
       </header>
 
       <main>
-        <Chart
-          data={monthlyBuckets.historical.concat(projectedBuckets)}
-          xAxisKey="month"
-          areaKey="balance"
-        />
+        {historicalBuckets ? (
+          <Chart
+            data={historicalBuckets.concat(projectedBuckets)}
+            xAxisKey="month"
+            areaKey="balance"
+          />
+        ) : null}
 
         {/* start: balance-header */}
         <div className={styles["balance-header"]}>
@@ -176,8 +183,8 @@ export default function Home() {
 
         {/* start: monthly-layout */}
         <div className={styles["month-layout"]}>
-          {monthlyBuckets.historical
-            ? monthlyBuckets.historical.map((bucket: Bucket) => (
+          {historicalBuckets
+            ? historicalBuckets.map((bucket: Bucket) => (
                 <div key={bucket.month} className={styles["month"]}>
                   <div>{moment(bucket.month).format("MMMM - YYYY")}</div>
                   <div className={styles["amount-total"]}>
@@ -240,12 +247,15 @@ export default function Home() {
                   </div>
 
                   <div className={styles["transaction-list"]}>
-                    {adjustments[bucket.month]
+                    {adjustments && adjustments[bucket.month]
                       ? adjustments[bucket.month].map(
                           (adjustment: Adjustment, i) => (
                             <div
                               key={adjustment.id}
-                              className="input-group-inline"
+                              className={clsx(
+                                "input-group-inline",
+                                styles["adjustment-row"]
+                              )}
                             >
                               <input
                                 className={styles["adjustment-input-name"]}
@@ -265,6 +275,16 @@ export default function Home() {
                                   );
                                 }}
                               />
+                              <div className={styles["adjustment-actions"]}>
+                                <div
+                                  className="button button-xsmall button-round"
+                                  onClick={(e) => {
+                                    deleteAdjustment(bucket, adjustment);
+                                  }}
+                                >
+                                  X
+                                </div>
+                              </div>
                             </div>
                           )
                         )
