@@ -44,9 +44,34 @@
   width: calc(var(--spacer) * 50);
 }
 
-.amount-total {
+.month-balance-group {
+  display: flex;
+  padding-top: 0.25rem;
+}
+
+.month-balance {
   padding-bottom: calc(var(--spacer) * 2);
   border-bottom: 1px solid var(--gray-400);
+}
+
+.profit-loss-total {
+  width: 100%;
+  color: var(--gray-600);
+  font-size: var(--font-size-xxs);
+}
+
+.profit-loss-revenue {
+  width: 100%;
+  color: var(--green);
+  font-size: var(--font-size-xxs);
+  text-align: right;
+}
+
+.profit-loss-expense {
+  width: 100%;
+  color: var(--gray-600);
+  font-size: var(--font-size-xxs);
+  text-align: right;
 }
 
 .transaction-list {

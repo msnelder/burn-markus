@@ -73,10 +73,11 @@ const getProjectedBuckets = (
   let projectedTotal = 0;
   let total = 0;
   let balance = 0;
-  let projectedBuckets = [];
+  let projectedBuckets: Bucket[] = [];
 
   // Create the bucket
   for (let i = 0; i < projectedMonths; i++) {
+    let adjustmentAmounts = [];
     let bucketId = uuidv4();
     let newMonth = moment().add(i, "M").format("YYYY-MM");
     let adjustmentTotal = 0;
@@ -84,6 +85,7 @@ const getProjectedBuckets = (
     if (adjustments && adjustments[newMonth]) {
       adjustmentTotal = adjustments[newMonth].reduce(
         (accumulator, adjustment) => {
+          adjustmentAmounts.push(adjustment.amount);
           return accumulator + adjustment.amount;
         },
         0
@@ -110,6 +112,8 @@ const getProjectedBuckets = (
     projectedBuckets.push({
       id: bucketId,
       month: newMonth,
+      transactions: [],
+      amounts: adjustmentAmounts,
       total: total,
       projected_total: projectedTotal,
       balance: balance,

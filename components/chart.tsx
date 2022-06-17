@@ -21,8 +21,6 @@ export default function Chart({
 }) {
   const gradientOffset = () => {
     if (data && data[0]) {
-      // console.log(data);
-      // console.log(data[0]);
       const dataMax = Math.max(...data.map((i) => i[areaKey]));
       const dataMin = Math.min(...data.map((i) => i[areaKey]));
 
