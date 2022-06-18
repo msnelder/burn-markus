@@ -148,7 +148,11 @@ input[type="number"].adjustment-input-value {
   transition: all 150ms ease-in-out;
 }
 
-.button-adjustment-add {
+.button-adjustment-actions {
+  display: flex;
   justify-content: flex-end;
+}
+
+.button-adjustment-add {
   margin-top: 0.25rem;
 }

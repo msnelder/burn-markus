@@ -74,7 +74,7 @@ export default function Home() {
     setAdjustments({
       ...adjustments,
       [modifiedBucket.month]: adjustments?.hasOwnProperty(modifiedBucket.month)
-        ? [...adjustments[modifiedBucket.month], newAdjustment]
+        ? [{ ...newAdjustment }, ...adjustments[modifiedBucket.month]]
         : [newAdjustment],
     });
   };
@@ -364,6 +364,19 @@ export default function Home() {
                   {/* end: balance-group */}
 
                   {/* start: adjustment-list */}
+                  <div className={styles["button-adjustment-actions"]}>
+                    <div
+                      className={clsx(
+                        "button button-text right button-small",
+                        styles["button-adjustment-add"]
+                      )}
+                      onClick={(e) => {
+                        createAdjustment(bucket);
+                      }}
+                    >
+                      Add Adjustment
+                    </div>
+                  </div>
                   <div className={styles["transaction-list"]}>
                     {adjustments && adjustments[bucket.month]
                       ? adjustments[bucket.month].map(
@@ -421,17 +434,6 @@ export default function Home() {
                       : null}
                   </div>
                   {/* end: adjustment-list */}
-                  <div
-                    className={clsx(
-                      "button button-text button-small",
-                      styles["button-adjustment-add"]
-                    )}
-                    onClick={(e) => {
-                      createAdjustment(bucket);
-                    }}
-                  >
-                    Add Adjustment
-                  </div>
                 </div>
               ))
             : null}

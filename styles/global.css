@@ -562,6 +562,15 @@ Buttons
   transition: all 200ms ease-in-out;
 }
 
+.button-text.right {
+  justify-content: flex-end;
+  padding-left: calc(var(--spacer) * 3);
+  padding-right: 0;
+}
+.button-text.right:hover {
+  padding-right: calc(var(--spacer) * 3);
+}
+
 /*
 Forms: Input - Text
 --------------------------- */
