@@ -28,7 +28,15 @@
 }
 
 .balance-summary {
+  display: flex;
+  column-gap: 0.25rem;
+  align-items: center;
   padding-left: 0.5rem;
+}
+
+.balance-summary-date {
+  font-size: var(--font-size-xs);
+  color: var(--gray-600);
 }
 
 .bucket-layout {

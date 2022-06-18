@@ -209,12 +209,11 @@ export default function Home() {
         {/* start: balance-header */}
         <div className={styles["balance-header"]}>
           <div className={clsx(styles["transaction-date"])}>
-            Available Balance (All Accounts as of{" "}
+            Available Balance (All Accounts){" "}
             {moment(today)
               .subtract(1, "months")
               .endOf("month")
-              .format("MMMM - YYYY")}
-            )
+              .format("MMM 'YY")}
           </div>
           <h2>
             {accounts
@@ -240,6 +239,12 @@ export default function Home() {
                 {`(${finalMonthBalance.amount >= 0 ? "+" : "-"}${
                   finalMonthBalance.change
                 }%)`}
+              </span>
+
+              <span className={styles["balance-summary-date"]}>
+                {moment(projectedBuckets?.slice(-1).pop().month).format(
+                  "MMM 'YY"
+                )}
               </span>
             </div>
           ) : null}
@@ -376,7 +381,7 @@ export default function Home() {
                         createAdjustment(bucket);
                       }}
                     >
-                      Add Adjustment
+                      &#43; Add Adjustment
                     </div>
                   </div>
                   <div className={styles["transaction-list"]}>
