@@ -7,7 +7,7 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import moment from "moment";
 import { getTransactionAmounts, getTransactionsByMonth } from "./transactions";
-import { sumArray } from "../helpers/math";
+import { sumArray } from "../../utils/math";
 
 const getBucketIndex = (desiredBucket: Bucket, buckets: Bucket[]) => {
   let index = buckets.findIndex((bucket) => bucket.id === desiredBucket.id);

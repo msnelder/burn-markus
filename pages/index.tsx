@@ -12,7 +12,7 @@ import { getHistoricalBuckets, getProjectedBuckets } from "../lib/burn/buckets";
 import styles from "./index.module.css";
 import { useSessionStorage } from "../lib/hooks/useSessionStorage";
 import { getTransactionAmounts } from "../lib/burn/transactions";
-import { sumArray } from "../lib/helpers/math";
+import { sumArray } from "../utils/math";
 
 export default function Home() {
   const [accessToken, setAccessToken] = useSessionStorage("access_token", null);
@@ -237,7 +237,9 @@ export default function Home() {
                 }}
               >
                 {" "}
-                {`(${finalMonthBalance.change}%)`}
+                {`(${finalMonthBalance.amount >= 0 ? "+" : "-"}${
+                  finalMonthBalance.change
+                }%)`}
               </span>
             </div>
           ) : null}

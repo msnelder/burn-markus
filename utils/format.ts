@@ -5,6 +5,7 @@ export function formatUSD(
   return Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
+    currencySign: "accounting",
     ...options,
   }).format(amount);
 }
