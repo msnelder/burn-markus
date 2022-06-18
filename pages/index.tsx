@@ -11,6 +11,8 @@ import { getTransactions } from "../lib/plaid/transactions";
 import { getHistoricalBuckets, getProjectedBuckets } from "../lib/burn/buckets";
 import styles from "./index.module.css";
 import { useSessionStorage } from "../lib/hooks/useSessionStorage";
+import { getTransactionAmounts } from "../lib/burn/transactions";
+import { sumArray } from "../lib/helpers/math";
 
 export default function Home() {
   const [accessToken, setAccessToken] = useSessionStorage("access_token", null);
@@ -23,22 +25,29 @@ export default function Home() {
   // const [adjustments, setAdjustments] = useState<Adjustments | {}>({});
   const [adjustments, setAdjustments] = useSessionStorage("adjustments", null);
 
+  const today = new Date();
+
   /* TODO:
     - [ ] Fix the account balance to exclude all expenses month-to-date
     - [ ] Enable / Disable adjustment
+    - [ ] Disconnect bank account
     ===== Future State
     - [ ] Move to reducers
     - [ ] Storing the adjustments - move to stupabase
     */
 
-  const sumAccountBalances = (accounts: Account[]) => {
+  const sumAccountBalances = (
+    accounts: Account[],
+    transactions: Transaction[]
+  ) => {
     let balances: number[] = [];
     let accountBalance: number = 0;
     accounts?.map((account: Account) => {
       balances.push(account.balances.available);
     });
+    const thisMonthsTransactions = getTransactionAmounts(transactions, today);
 
-    accountBalance = balances.reduce((a, b) => a + b, 0);
+    accountBalance = sumArray(balances) - sumArray(thisMonthsTransactions);
     return accountBalance;
   };
 
@@ -120,7 +129,7 @@ export default function Home() {
     // console.log(expenses);
     // console.log(revenue);
 
-    const profitLoss = {
+    const profitLoss: { expenses: number; revenue: number } = {
       expenses: expensesTotal,
       revenue: revenueTotal,
     };
@@ -134,16 +143,38 @@ export default function Home() {
         6,
         historicalBuckets,
         adjustments,
-        accountBalance
+        accountBalance,
+        transactions
       );
       return buckets;
     }
   }, [historicalBuckets, adjustments]);
 
+  const finalMonthBalance: {
+    amount: number;
+    change: number;
+  } = {
+    amount: projectedBuckets?.slice(-1).pop().balance,
+    change: Math.round(
+      100 * (1 - accountBalance / projectedBuckets?.slice(-1).pop().balance)
+    ),
+  };
+
+  const percentGainColor = (payload: number) => {
+    if (payload > 0) {
+      return "var(--green)";
+    } else {
+      return "var(--red)";
+    }
+  };
+
   useEffect(() => {
     if (!accessToken) return;
     getTransactions(accessToken).then((data) => {
-      let accountBalance: number = sumAccountBalances(data.accounts);
+      let accountBalance: number = sumAccountBalances(
+        data.accounts,
+        data.transactions
+      );
       setAccountBalance(accountBalance);
       setTransactions(data.transactions);
       setAccounts(data.accounts);
@@ -175,16 +206,15 @@ export default function Home() {
       </header>
 
       <main>
-        <Chart
-          data={historicalBuckets?.concat(projectedBuckets)}
-          xAxisKey="month"
-          areaKey="balance"
-        />
-
         {/* start: balance-header */}
         <div className={styles["balance-header"]}>
           <div className={clsx(styles["transaction-date"])}>
-            Available Balance (All Accounts)
+            Available Balance (All Accounts as of{" "}
+            {moment(today)
+              .subtract(1, "months")
+              .endOf("month")
+              .format("MMMM - YYYY")}
+            )
           </div>
           <h2>
             {accounts
@@ -195,21 +225,47 @@ export default function Home() {
                   maximumFractionDigits: 2,
                 })}
           </h2>
+          {projectedBuckets ? (
+            <div className={styles["balance-summary"]}>
+              {formatUSD(finalMonthBalance.amount, {
+                maximumFractionDigits: 2,
+              })}
+
+              <span
+                style={{
+                  color: percentGainColor(finalMonthBalance.change),
+                }}
+              >
+                {" "}
+                {`(${finalMonthBalance.change}%)`}
+              </span>
+            </div>
+          ) : null}
         </div>
         {/* end: balance-header */}
 
+        <Chart
+          data={historicalBuckets?.concat(projectedBuckets)}
+          xAxisKey="month"
+          areaKey="balance"
+          balance={accountBalance}
+        />
+
         {/* start: monthly-layout */}
-        <div className={styles["month-layout"]}>
+        <div className={styles["bucket-layout"]}>
           {historicalBuckets
             ? historicalBuckets.map((bucket: Bucket) => (
-                <div key={bucket.month} className={styles["month"]}>
-                  <div>{moment(bucket.month).format("MMMM - YYYY")}</div>
-                  <div className={styles["month-balance"]}>
+                <div key={bucket.month} className={styles["bucket"]}>
+                  <div className={styles["bucket-month"]}>
+                    {moment(bucket.month).format("MMMM 'YY")}
+                  </div>
+                  <div className={styles["bucket-balance"]}>
                     {formatUSD(bucket.balance, { maximumFractionDigits: 2 })}
                   </div>
                   {/* start: balance-group */}
-                  <div className={styles["month-balance-group"]}>
+                  <div className={styles["bucket-balance-group"]}>
                     <div className={clsx(styles["profit-loss-total"])}>
+                      Net{" "}
                       {formatUSD(bucket.total, { maximumFractionDigits: 2 })}
                     </div>
                     <div className={styles["profit-loss"]}>
@@ -258,19 +314,36 @@ export default function Home() {
           {/* start: projected-months */}
           {projectedBuckets
             ? projectedBuckets.map((bucket: Bucket) => (
-                <div key={bucket.month} className={styles["month"]}>
-                  <div>{moment(bucket.month).format("MMMM - YYYY")}</div>
-                  <div className={styles["month-balance"]}>
+                <div key={bucket.month} className={styles["bucket"]}>
+                  <div className={styles["bucket-month"]}>
+                    {moment(bucket.month).format("MMMM 'YY")}
+                  </div>
+                  <div className={styles["bucket-balance"]}>
                     {formatUSD(bucket.balance, {
                       maximumFractionDigits: 2,
                     })}
                   </div>
                   {/* start: balance-group */}
-                  <div className={styles["month-balance-group"]}>
+                  <div className={styles["bucket-balance-group"]}>
                     <div className={clsx(styles["profit-loss-total"])}>
+                      Net{" "}
                       {formatUSD(bucket.total, { maximumFractionDigits: 2 })}
                     </div>
                     <div className={styles["profit-loss"]}>
+                      {bucket.transactions.length > 0 ? (
+                        <>
+                          <div className={clsx(styles["profit-loss-revenue"])}>
+                            {formatUSD(
+                              sumArray(
+                                getTransactionAmounts(
+                                  bucket.transactions
+                                ).filter((amount) => amount > 0)
+                              ),
+                              { maximumFractionDigits: 2 }
+                            )}
+                          </div>
+                        </>
+                      ) : null}
                       <div className={clsx(styles["profit-loss-revenue"])}>
                         {formatUSD(sumAmounts(bucket.amounts).revenue, {
                           maximumFractionDigits: 2,
@@ -278,6 +351,11 @@ export default function Home() {
                       </div>
                       <div className={clsx(styles["profit-loss-expense"])}>
                         {formatUSD(sumAmounts(bucket.amounts).expenses, {
+                          maximumFractionDigits: 2,
+                        })}
+                      </div>
+                      <div className={clsx(styles["profit-loss-expense"])}>
+                        {formatUSD(bucket.projected_total, {
                           maximumFractionDigits: 2,
                         })}
                       </div>
@@ -334,7 +412,7 @@ export default function Home() {
                                     deleteAdjustment(bucket, adjustment);
                                   }}
                                 >
-                                  X
+                                  &#10005;
                                 </div>
                               </div>
                             </div>

@@ -1,3 +1,5 @@
+import { formatUSD } from "../utils/format";
+
 import {
   Area,
   AreaChart,
@@ -14,10 +16,12 @@ export default function Chart({
   data,
   xAxisKey,
   areaKey,
+  balance,
 }: {
   data: any;
   xAxisKey: string;
   areaKey: string;
+  balance: number;
 }) {
   const gradientOffset = () => {
     if (data && data[0]) {
@@ -50,7 +54,36 @@ export default function Chart({
   };
 
   const monthFormatter = (month: string) => {
-    return moment(month).format("MMMM - YYYY");
+    return moment(month).format("MMM 'YY");
+  };
+
+  const percentGainColor = (payload: number) => {
+    if (payload > 0) {
+      return "var(--green)";
+    } else {
+      return "var(--red)";
+    }
+  };
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="custom-tooltip">
+          <p style={{ margin: 0 }}>{moment(label).format("MMM 'YY")}</p>
+          <p style={{ margin: 0, fontSize: "0.75rem" }}>
+            {formatUSD(payload[0].value, {
+              maximumFractionDigits: 2,
+            })}{" "}
+            <span style={{ color: percentGainColor(payload[0].value) }}>
+              ({Math.round(100 * (1 - balance / payload[0].value))}
+              {"%"})
+            </span>
+          </p>
+        </div>
+      );
+    }
+
+    return null;
   };
 
   return (
@@ -60,16 +93,35 @@ export default function Chart({
         height={240}
         data={data}
         margin={{
-          top: 20,
           right: 20,
           bottom: 20,
           left: 20,
         }}
       >
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey={xAxisKey} tickFormatter={monthFormatter} />
-        <YAxis tickFormatter={moneyFormatter} />
-        <Tooltip />
+        {/* <CartesianGrid strokeDasharray="3 3" /> */}
+        <XAxis
+          dataKey={xAxisKey}
+          tickFormatter={monthFormatter}
+          tickLine={false}
+          style={{
+            fontSize: "0.75rem",
+          }}
+        />
+        <YAxis
+          tickFormatter={moneyFormatter}
+          axisLine={false}
+          tickLine={false}
+          tick={false}
+          width={0}
+          style={{
+            fontSize: "0.75rem",
+          }}
+        />
+        <Tooltip
+          position={{ y: 0 }}
+          content={<CustomTooltip />}
+          isAnimationActive={false}
+        />
         <defs>
           <linearGradient id="splitColor" x1="0" y1="0" x2="0" y2="1">
             <stop offset={off} stopColor="#63cb63" stopOpacity={1} />

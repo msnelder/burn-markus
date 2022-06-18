@@ -6,6 +6,8 @@ import {
 } from "../../types/types";
 import { v4 as uuidv4 } from "uuid";
 import moment from "moment";
+import { getTransactionAmounts, getTransactionsByMonth } from "./transactions";
+import { sumArray } from "../helpers/math";
 
 const getBucketIndex = (desiredBucket: Bucket, buckets: Bucket[]) => {
   let index = buckets.findIndex((bucket) => bucket.id === desiredBucket.id);
@@ -18,36 +20,40 @@ const getHistoricalBuckets = (
 ) => {
   let bucketMonth: string = "";
   let buckets: Bucket[] = [];
+  const today = new Date();
+  const thisMonth = moment(today).format("YYYY-MM");
 
   // Loop through all of the transactions from every account
   transactions?.map((transaction: Transaction) => {
     let transactionMonth = moment(transaction.date).format("YYYY-MM");
     // If it's a new month, create a new array for that month as a "bucket"
-    if (transactionMonth != bucketMonth) {
-      bucketMonth = transactionMonth;
-      let dateBucket: Bucket = {
-        id: uuidv4(),
-        month: "",
-        transactions: [],
-        amounts: [],
-        total: 0,
-        projected_total: 0,
-        balance: 0,
-      };
-      dateBucket["month"] = bucketMonth;
-      buckets.unshift(dateBucket);
-    }
+    if (transactionMonth !== thisMonth) {
+      if (transactionMonth !== bucketMonth) {
+        bucketMonth = transactionMonth;
+        let dateBucket: Bucket = {
+          id: uuidv4(),
+          month: "",
+          transactions: [],
+          amounts: [],
+          total: 0,
+          projected_total: 0,
+          balance: 0,
+        };
+        dateBucket["month"] = bucketMonth;
+        buckets.unshift(dateBucket);
+      }
 
-    // Find the bucket this transaction belongs in
-    let thisBucket = buckets.find(
-      (bucket) => bucket.month === transactionMonth
-    );
-    // Put the transaction in the bucket
-    thisBucket.transactions = [...thisBucket.transactions, transaction];
-    // Put it's amount in the amounts array for easy calculation
-    thisBucket.amounts = [...thisBucket.amounts, transaction.amount * -1];
-    // Recaculate the total for the bucket
-    thisBucket.total = thisBucket.amounts.reduce((a, b) => a + b, 0);
+      // Find the bucket this transaction belongs in
+      let newBucket = buckets.find(
+        (bucket) => bucket.month === transactionMonth
+      );
+      // Put the transaction in the bucket
+      newBucket.transactions = [...newBucket.transactions, transaction];
+      // Put it's amount in the amounts array for easy calculation
+      newBucket.amounts = [...newBucket.amounts, transaction.amount * -1];
+      // Recaculate the total for the bucket
+      newBucket.total = newBucket.amounts.reduce((a, b) => a + b, 0);
+    }
   });
 
   // Compute the balance for each bucket based on current balance
@@ -67,7 +73,8 @@ const getProjectedBuckets = (
   projectedMonths: number,
   historicalBuckets: Bucket[],
   adjustments: Adjustments,
-  accountBalance: number
+  accountBalance: number,
+  transactions: Transaction[]
 ) => {
   let totals = [];
   let projectedTotal = 0;
@@ -81,16 +88,31 @@ const getProjectedBuckets = (
     let bucketId = uuidv4();
     let newMonth = moment().add(i, "M").format("YYYY-MM");
     let adjustmentTotal = 0;
+    let thisMonthsTransactions: Transaction[] = [];
+
+    let today = new Date();
+    let thisMonth = moment(today).format("YYYY-MM");
+    if (thisMonth === newMonth) {
+      thisMonthsTransactions = getTransactionsByMonth(transactions, today);
+    }
 
     if (adjustments && adjustments[newMonth]) {
       adjustmentTotal = adjustments[newMonth].reduce(
-        (accumulator, adjustment) => {
+        (accumulator, adjustment: Adjustment) => {
           adjustmentAmounts.push(adjustment.amount);
           return accumulator + adjustment.amount;
         },
         0
       );
     }
+
+    adjustmentTotal =
+      adjustmentTotal +
+      sumArray(
+        getTransactionAmounts(thisMonthsTransactions).filter(
+          (amount) => amount > 0
+        )
+      );
 
     // Get the transaction totals from each historical bucket
     historicalBuckets.map((bucket: Bucket) => {
@@ -112,7 +134,7 @@ const getProjectedBuckets = (
     projectedBuckets.push({
       id: bucketId,
       month: newMonth,
-      transactions: [],
+      transactions: thisMonthsTransactions,
       amounts: adjustmentAmounts,
       total: total,
       projected_total: projectedTotal,

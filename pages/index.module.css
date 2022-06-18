@@ -23,33 +23,41 @@
 
 .balance-header {
   padding-top: 1rem;
-  padding-bottom: 1.25rem;
   padding-left: 1.25rem;
   padding-right: 1.25rem;
 }
 
-.month-layout {
+.balance-summary {
+  padding-left: 0.5rem;
+}
+
+.bucket-layout {
   display: flex;
   column-gap: 4rem;
   width: 100%;
   padding-left: 1.25rem;
   padding-right: 1.25rem;
+  padding-bottom: 4rem;
   overflow-x: scroll;
   overflow-y: hidden;
 }
 
-.month {
+.bucket {
   flex-grow: 0;
   flex-shrink: 0;
   width: calc(var(--spacer) * 50);
 }
 
-.month-balance-group {
+.bucket-month {
+  font-size: var(--font-size-l);
+}
+
+.bucket-balance-group {
   display: flex;
   padding-top: 0.25rem;
 }
 
-.month-balance {
+.bucket-balance {
   padding-bottom: calc(var(--spacer) * 2);
   border-bottom: 1px solid var(--gray-400);
 }
@@ -141,5 +149,6 @@ input[type="number"].adjustment-input-value {
 }
 
 .button-adjustment-add {
+  justify-content: flex-end;
   margin-top: 0.25rem;
 }

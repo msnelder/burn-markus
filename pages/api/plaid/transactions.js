@@ -23,6 +23,7 @@ export default async function handler(req, res) {
     const firstOfCurrentMonth = moment(today)
       .startOf("month")
       .format("YYYY-MM-DD");
+    const endOfCurrentMonth = moment(today).endOf("month").format("YYYY-MM-DD");
     const lastDayOfLastMonth = moment(today)
       .subtract(1, "months")
       .endOf("month")
@@ -37,7 +38,7 @@ export default async function handler(req, res) {
     const response = await client.transactionsGet({
       access_token,
       start_date: threeMonthsAgo,
-      end_date: lastDayOfLastMonth,
+      end_date: endOfCurrentMonth,
     });
     const transactions = response.data.transactions;
     const accounts = response.data.accounts;
