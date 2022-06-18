@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
 import Head from "next/head";
-import moment from "moment";
 import { v4 as uuidv4 } from "uuid";
 import clsx from "clsx";
 import { formatUSD } from "../utils/format";
@@ -9,10 +8,13 @@ import PlaidLink from "../components/simple-plaid-link";
 import { Account, Transaction, Bucket, Adjustment } from "../types/types";
 import { getTransactions } from "../lib/plaid/transactions";
 import { getHistoricalBuckets, getProjectedBuckets } from "../lib/burn/buckets";
-import styles from "./index.module.css";
 import { useSessionStorage } from "../lib/hooks/useSessionStorage";
 import { getTransactionAmounts } from "../lib/burn/transactions";
 import { sumArray } from "../utils/math";
+
+import styles from "./index.module.css";
+import AppTabs from "../components/app-tabs";
+import { format, parseISO, sub } from "date-fns";
 
 export default function Home() {
   const [accessToken, setAccessToken] = useSessionStorage("access_token", null);
@@ -164,24 +166,20 @@ export default function Home() {
     ),
   };
 
-  const percentGainColor = (newValue: number, originalValue: number) => {
-    if (newValue - originalValue > 0) {
-      return "var(--green)";
-    } else {
-      return "var(--red)";
-    }
-  };
-
   useEffect(() => {
     if (!accessToken) return;
     getTransactions(accessToken).then((data) => {
-      let accountBalance: number = sumAccountBalances(
-        data.accounts,
-        data.transactions
-      );
-      setAccountBalance(accountBalance);
-      setTransactions(data.transactions);
-      setAccounts(data.accounts);
+      if (data.accounts) {
+        let accountBalance: number = sumAccountBalances(
+          data.accounts,
+          data.transactions
+        );
+        setAccountBalance(accountBalance);
+        setTransactions(data.transactions);
+        setAccounts(data.accounts);
+      } else {
+        setAccessToken(null);
+      }
     });
   }, [accessToken]); // <-- dependency array
 
@@ -199,13 +197,18 @@ export default function Home() {
       </Head>
 
       <header className={styles["header"]}>
-        <h1 className="title">Burn</h1>
+        <div className={styles["header-left"]}>
+          <div className="title">Burn</div>
+          <AppTabs />
+        </div>
 
-        <div className={styles["actions"]}>
-          <PlaidLink
-            setAccessToken={setAccessToken}
-            accessToken={accessToken}
-          />
+        <div className={styles["header-right"]}>
+          <div className={styles["actions"]}>
+            <PlaidLink
+              setAccessToken={setAccessToken}
+              accessToken={accessToken}
+            />
+          </div>
         </div>
       </header>
 
@@ -214,12 +217,9 @@ export default function Home() {
         <div className={styles["balance-header"]}>
           <div className={clsx(styles["transaction-date"])}>
             Available Balance (All Accounts){" "}
-            {moment(today)
-              .subtract(1, "months")
-              .endOf("month")
-              .format("MMM 'YY")}
+            {format(sub(new Date(), { months: 1 }), "MMM ’yy")}
           </div>
-          <h2>
+          <h2 className="font-mono">
             {accounts
               ? formatUSD(accountBalance, {
                   maximumFractionDigits: 2,
@@ -235,12 +235,15 @@ export default function Home() {
               })}
 
               <span
-                style={{
-                  color:
-                    finalMonthBalance.change - accountBalance > 0
-                      ? "var(--green)"
-                      : "var(--red)",
-                }}
+                className={clsx(
+                  {
+                    "text-green-500":
+                      finalMonthBalance.change - accountBalance > 0,
+                    "text-red-500":
+                      finalMonthBalance.change - accountBalance < 0,
+                  },
+                  "font-mono"
+                )}
               >
                 {" "}
                 ({finalMonthBalance.change >= 0 ? "+" : null}
@@ -248,8 +251,9 @@ export default function Home() {
               </span>
 
               <span className={styles["balance-summary-date"]}>
-                {moment(projectedBuckets?.slice(-1).pop().month).format(
-                  "MMM 'YY"
+                {format(
+                  parseISO(projectedBuckets?.slice(-1).pop().month),
+                  "MMM ’yy"
                 )}
               </span>
             </div>
@@ -270,7 +274,7 @@ export default function Home() {
             ? historicalBuckets.map((bucket: Bucket) => (
                 <div key={bucket.month} className={styles["bucket"]}>
                   <div className={styles["bucket-month"]}>
-                    {moment(bucket.month).format("MMMM 'YY")}
+                    {format(parseISO(bucket.month), "MMM ’yy")}
                   </div>
                   <div className={styles["bucket-balance"]}>
                     {formatUSD(bucket.balance, { maximumFractionDigits: 2 })}
@@ -303,7 +307,7 @@ export default function Home() {
                         className={clsx(styles["transaction-item"])}
                       >
                         <div className={clsx(styles["transaction-date"])}>
-                          {moment(transaction.date).format("MM-DD")}
+                          {format(parseISO(transaction.date), "MM-dd")}
                         </div>
                         <div
                           className={clsx(
@@ -329,7 +333,7 @@ export default function Home() {
             ? projectedBuckets.map((bucket: Bucket) => (
                 <div key={bucket.month} className={styles["bucket"]}>
                   <div className={styles["bucket-month"]}>
-                    {moment(bucket.month).format("MMMM 'YY")}
+                    {format(parseISO(bucket.month), "MMM ’yy")}
                   </div>
                   <div className={styles["bucket-balance"]}>
                     {formatUSD(bucket.balance, {
@@ -380,7 +384,7 @@ export default function Home() {
                   <div className={styles["button-adjustment-actions"]}>
                     <div
                       className={clsx(
-                        "button button-text right button-small",
+                        "button button-small button-primary button-text right",
                         styles["button-adjustment-add"]
                       )}
                       onClick={(e) => {
@@ -433,7 +437,7 @@ export default function Home() {
                               />
                               <div className={styles["adjustment-actions"]}>
                                 <div
-                                  className="button button-xsmall button-round"
+                                  className="button button-xsmall button-round button-primary"
                                   onClick={(e) => {
                                     deleteAdjustment(bucket, adjustment);
                                   }}

@@ -1,5 +1,5 @@
 import { Configuration, PlaidApi, PlaidEnvironments } from "plaid";
-import moment from "moment";
+import { format, startOfMonth, endOfMonth, sub } from "date-fns";
 
 const configuration = new Configuration({
   basePath: PlaidEnvironments[process.env.PLAID_ENV],
@@ -17,28 +17,14 @@ export default async function handler(req, res) {
   try {
     const { access_token } = JSON.parse(req.body);
 
-    const now = moment();
-    const today = now.format("YYYY-MM-DD");
-    // const thirtyDaysAgo = now.subtract(30, "days").format("YYYY-MM-DD");
-    const firstOfCurrentMonth = moment(today)
-      .startOf("month")
-      .format("YYYY-MM-DD");
-    const endOfCurrentMonth = moment(today).endOf("month").format("YYYY-MM-DD");
-    const lastDayOfLastMonth = moment(today)
-      .subtract(1, "months")
-      .endOf("month")
-      .format("YYYY-MM-DD");
-    const threeMonthsAgo = moment(firstOfCurrentMonth)
-      .subtract(3, "months")
-      .format("YYYY-MM-DD");
-    // const sixMonthsAgo = moment(firstOfCurrentMonth)
-    //   .subtract(6, "months")
-    //   .format("YYYY-MM-DD");
+    const firstOfMonth = startOfMonth(new Date());
+    const startDate = format(sub(firstOfMonth, { months: 3 }), "yyyy-MM-dd");
+    const endDate = format(endOfMonth(new Date()), "yyyy-MM-dd");
 
     const response = await client.transactionsGet({
       access_token,
-      start_date: threeMonthsAgo,
-      end_date: endOfCurrentMonth,
+      start_date: startDate,
+      end_date: endDate,
     });
     const transactions = response.data.transactions;
     const accounts = response.data.accounts;

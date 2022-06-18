@@ -5,7 +5,7 @@ import {
   Adjustment,
 } from "../../types/types";
 import { v4 as uuidv4 } from "uuid";
-import moment from "moment";
+import { add, format, parseISO } from "date-fns";
 import { getTransactionAmounts, getTransactionsByMonth } from "./transactions";
 import { sumArray } from "../../utils/math";
 
@@ -20,12 +20,11 @@ const getHistoricalBuckets = (
 ) => {
   let bucketMonth: string = "";
   let buckets: Bucket[] = [];
-  const today = new Date();
-  const thisMonth = moment(today).format("YYYY-MM");
+  const thisMonth = format(new Date(), "yyyy-MM");
 
   // Loop through all of the transactions from every account
   transactions?.map((transaction: Transaction) => {
-    let transactionMonth = moment(transaction.date).format("YYYY-MM");
+    let transactionMonth = format(parseISO(transaction.date), "yyyy-MM");
     // If it's a new month, create a new array for that month as a "bucket"
     if (transactionMonth !== thisMonth) {
       if (transactionMonth !== bucketMonth) {
@@ -86,12 +85,12 @@ const getProjectedBuckets = (
   for (let i = 0; i < projectedMonths; i++) {
     let adjustmentAmounts = [];
     let bucketId = uuidv4();
-    let newMonth = moment().add(i, "M").format("YYYY-MM");
+    let newMonth = format(add(new Date(), { months: i }), "yyyy-MM");
     let adjustmentTotal = 0;
     let thisMonthsTransactions: Transaction[] = [];
 
     let today = new Date();
-    let thisMonth = moment(today).format("YYYY-MM");
+    let thisMonth = format(new Date(), "yyyy-MM");
     if (thisMonth === newMonth) {
       thisMonthsTransactions = getTransactionsByMonth(transactions, today);
     }

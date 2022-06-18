@@ -1,11 +1,25 @@
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding-top: 1.25rem;
+  height: 2.75rem;
   padding-left: 1.25rem;
   padding-right: 1.25rem;
-  padding-bottom: 1rem;
+  background-color: black;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  justify-content: flex-end;
+  height: 100%;
 }
 
 .title {
@@ -22,7 +36,7 @@
 }
 
 .balance-header {
-  padding-top: 1rem;
+  padding-top: 1.25rem;
   padding-left: 1.25rem;
   padding-right: 1.25rem;
 }
@@ -117,6 +131,7 @@
 
 .adjustment-row {
   position: relative;
+  padding-bottom: 1px;
 }
 
 input[type="text"].adjustment-input-name {
@@ -135,9 +150,12 @@ input[type="text"].adjustment-input-name {
 input[type="number"].adjustment-input-value {
   flex-grow: 2;
   flex-shrink: 1;
-  height: 1.5rem;
+  height: 1.25rem;
   min-width: 0;
   width: 50%;
+  background-color: var(--gray-800);
+  border-color: var(--gray-700);
+  text-align: right;
 }
 
 .adjustment-actions {

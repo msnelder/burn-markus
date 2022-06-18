@@ -139,7 +139,7 @@ Variables
     #007aff,
     #34aadc,
     #5856d6,
-    #ff2d55
+    #fb806c
   );
   /* // Used when no type is provided */
   --toastify-color-progress-dark: #302341;
@@ -297,6 +297,10 @@ Text Sizes
   color: var(--yellow-900);
 }
 
+.text-red-500 {
+  color: var(--red-500);
+}
+
 /* Text Styles
 --------------------------- */
 .text-indent {
@@ -394,11 +398,11 @@ Scaffolding
 html,
 body {
   position: relative;
-  background-color: var(--gray-300);
+  background-color: var(--gray-900);
   font-family: var(--font-family-sans);
   font-weight: var(--font-medium);
   font-size: var(--font-size-base);
-  color: var(--gray-800);
+  color: var(--gray-300);
   line-height: 1.2;
   overflow-x: hidden;
   -ms-overflow-style: none; /* IE and Edge */
@@ -425,18 +429,18 @@ Defaults: Headings
 h1 {
   margin: 0;
   font-size: 3.25rem; /* 52px */
-  color: var(--gray-900);
+  color: var(--gray-100);
 }
 h2 {
   margin: 0;
   font-size: 3rem; /* 48px */
-  color: var(--gray-900);
+  color: var(--gray-100);
 }
 h3 {
   margin: 0;
   margin-bottom: 1rem;
   font-size: 2rem; /* 32px */
-  color: var(--gray-900);
+  color: var(--gray-100);
 }
 
 /*
@@ -445,7 +449,6 @@ Defaults: Paragraphs
 p {
   margin-bottom: 16px;
   line-height: 1.4;
-  color: var(--gray-800);
 }
 
 /*
@@ -454,16 +457,20 @@ Defaults: Links
 a,
 a:visited {
   font-weight: 600;
-  color: var(--gray-600);
+  color: var(--yellow-300);
   transition: all ease-in-out 150ms;
 }
 a:hover {
-  color: var(--gray-900);
+  color: var(--yellow-300);
   transition: all ease-in-out 150ms;
 }
 
 a[target="_blank"] {
   cursor: alias;
+}
+
+.font-mono {
+  font-family: var(--font-family-mono);
 }
 
 /*
@@ -559,7 +566,8 @@ Buttons
 }
 .button-text:hover {
   padding-left: calc(var(--spacer) * 3);
-  background-color: rgba(0, 0, 0, 0.04);
+  background-color: rgba(0, 0, 0, 0.4);
+  background-blend-mode: screen;
   transition: all 200ms ease-in-out;
 }
 
@@ -609,6 +617,17 @@ input[type="number"].input-large {
   padding-left: calc(var(--spacer) * 4);
   padding-right: calc(var(--spacer) * 4);
   font-size: var(--font-size-s);
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
 }
 
 /*
