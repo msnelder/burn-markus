@@ -75,8 +75,8 @@ export default function Chart({
               maximumFractionDigits: 2,
             })}{" "}
             <span style={{ color: percentGainColor(payload[0].value) }}>
-              ({payload[0].value >= 0 ? "+" : "-"}
-              {Math.round(100 * (1 - balance / payload[0].value))}
+              ({payload[0].value >= 0 ? "+" : null}
+              {Math.round(100 * ((payload[0].value - balance) / balance))}
               {"%"})
             </span>
           </p>

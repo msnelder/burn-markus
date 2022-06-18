@@ -156,7 +156,9 @@ export default function Home() {
   } = {
     amount: projectedBuckets?.slice(-1).pop().balance,
     change: Math.round(
-      100 * (1 - accountBalance / projectedBuckets?.slice(-1).pop().balance)
+      100 *
+        ((projectedBuckets?.slice(-1).pop().balance - accountBalance) /
+          accountBalance)
     ),
   };
 
@@ -236,7 +238,7 @@ export default function Home() {
                 }}
               >
                 {" "}
-                {`(${finalMonthBalance.amount >= 0 ? "+" : "-"}${
+                {`(${finalMonthBalance.amount >= 0 ? "+" : null}${
                   finalMonthBalance.change
                 }%)`}
               </span>
