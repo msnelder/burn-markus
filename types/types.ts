@@ -25,6 +25,7 @@ export type Adjustment = {
   name: string;
   amount: number;
   bucket_id: string;
+  enabled: boolean;
 };
 
 export type Adjustments = {

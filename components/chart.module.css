@@ -1,0 +1,14 @@
+.tooltip {
+  mix-blend-mode: difference;
+}
+
+.tooltip-date {
+  margin: 0;
+  mix-blend-mode: difference;
+}
+
+.tooltip-value {
+  margin: 0;
+  font-size: 0.75rem;
+  mix-blend-mode: difference;
+}

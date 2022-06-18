@@ -1,3 +1,6 @@
+/* =================================== */
+/* Header */
+/* =================================== */
 .header {
   display: flex;
   align-items: center;
@@ -35,6 +38,10 @@
   display: flex;
 }
 
+/* =================================== */
+/* Balance Header */
+/* =================================== */
+
 .balance-header {
   padding-top: 1.25rem;
   padding-left: 1.25rem;
@@ -53,6 +60,9 @@
   color: var(--gray-600);
 }
 
+/* =================================== */
+/* Buckets */
+/* =================================== */
 .bucket-layout {
   display: flex;
   column-gap: 4rem;
@@ -74,6 +84,8 @@
   font-size: var(--font-size-l);
 }
 
+/* Bucket header */
+/* ======================= */
 .bucket-balance-group {
   display: flex;
   padding-top: 0.25rem;
@@ -104,6 +116,8 @@
   text-align: right;
 }
 
+/* Transactions */
+/* ======================= */
 .transaction-list {
   padding-top: calc(var(--spacer) * 2);
 }
@@ -129,6 +143,12 @@
   color: var(--green);
 }
 
+/* Adjustments */
+/* ======================= */
+.button-adjustment-add {
+  margin-top: 0.25rem;
+}
+
 .adjustment-row {
   position: relative;
   padding-bottom: 1px;
@@ -146,6 +166,10 @@ input[type="text"].adjustment-input-name {
   border: none;
   font-size: var(--font-size-xxs);
 }
+.adjustment-input-name.disabled {
+  opacity: 0.25;
+  transition: all 150ms ease-in-out;
+}
 
 input[type="number"].adjustment-input-value {
   flex-grow: 2;
@@ -157,20 +181,27 @@ input[type="number"].adjustment-input-value {
   border-color: var(--gray-700);
   text-align: right;
 }
+.adjustment-input-value.disabled {
+  opacity: 0.25;
+  transition: all 150ms ease-in-out;
+}
 
 .adjustment-actions {
+  display: flex;
+  align-items: center;
+  column-gap: 0.125rem;
   visibility: hidden;
   opacity: 0;
   position: absolute;
   top: 50%;
-  right: 0;
-  transform: translate(100%, -50%);
+  right: 0.5rem;
+  transform: translate(105%, -50%);
   transition: all 100ms ease-in-out;
 }
 .adjustment-row:hover .adjustment-actions {
   visibility: visible;
   opacity: 1;
-  transform: translate(50%, -50%);
+  transform: translate(100%, -50%);
   transition: all 150ms ease-in-out;
 }
 
@@ -179,6 +210,23 @@ input[type="number"].adjustment-input-value {
   justify-content: flex-end;
 }
 
-.button-adjustment-add {
-  margin-top: 0.25rem;
+.adjustment-delete {
+  justify-content: center;
+  padding: 0;
+  height: 1.125rem;
+  width: 1.125rem;
+  margin-left: 0;
+}
+
+.adjustment-toggle {
+  justify-content: center;
+  padding: 0;
+  height: 1.125rem;
+  width: 1.125rem;
+  margin-left: 0;
+  font-size: 20px;
+}
+
+.adjustment-toggle-icon {
+  margin-top: -4px;
 }

@@ -1,9 +1,4 @@
-import {
-  Transaction,
-  Bucket,
-  Adjustments,
-  Adjustment,
-} from "../../types/types";
+import { Transaction, Bucket, Adjustments, Adjustment } from "../../types/types";
 import { v4 as uuidv4 } from "uuid";
 import { add, format, parseISO } from "date-fns";
 import { getTransactionAmounts, getTransactionsByMonth } from "./transactions";
@@ -14,10 +9,7 @@ const getBucketIndex = (desiredBucket: Bucket, buckets: Bucket[]) => {
   return index;
 };
 
-const getHistoricalBuckets = (
-  transactions: Transaction[],
-  accountBalance: number
-) => {
+const getHistoricalBuckets = (transactions: Transaction[], accountBalance: number) => {
   let bucketMonth: string = "";
   let buckets: Bucket[] = [];
   const thisMonth = format(new Date(), "yyyy-MM");
@@ -43,9 +35,7 @@ const getHistoricalBuckets = (
       }
 
       // Find the bucket this transaction belongs in
-      let newBucket = buckets.find(
-        (bucket) => bucket.month === transactionMonth
-      );
+      let newBucket = buckets.find((bucket) => bucket.month === transactionMonth);
       // Put the transaction in the bucket
       newBucket.transactions = [...newBucket.transactions, transaction];
       // Put it's amount in the amounts array for easy calculation
@@ -96,22 +86,18 @@ const getProjectedBuckets = (
     }
 
     if (adjustments && adjustments[newMonth]) {
-      adjustmentTotal = adjustments[newMonth].reduce(
-        (accumulator, adjustment: Adjustment) => {
-          adjustmentAmounts.push(adjustment.amount);
+      adjustmentTotal = adjustments[newMonth]
+        .filter((adjustment) => adjustment.enabled !== false)
+        .reduce((accumulator, adjustment: Adjustment) => {
+          if (adjustment.enabled) {
+            adjustmentAmounts.push(adjustment.amount);
+          }
           return accumulator + adjustment.amount;
-        },
-        0
-      );
+        }, 0);
     }
 
     adjustmentTotal =
-      adjustmentTotal +
-      sumArray(
-        getTransactionAmounts(thisMonthsTransactions).filter(
-          (amount) => amount > 0
-        )
-      );
+      adjustmentTotal + sumArray(getTransactionAmounts(thisMonthsTransactions).filter((amount) => amount > 0));
 
     // Get the transaction totals from each historical bucket
     historicalBuckets.map((bucket: Bucket) => {

@@ -14,16 +14,14 @@ import { sumArray, percentChange } from "../utils/math";
 
 import styles from "./index.module.css";
 import AppTabs from "../components/app-tabs";
-import { format, parseISO, sub } from "date-fns";
+import { format, parseISO, startOfMonth, sub } from "date-fns";
 
 export default function Home() {
   const [accessToken, setAccessToken] = useSessionStorage("access_token", null);
   const [accounts, setAccounts] = useState<Account[] | null>(null);
   const [accountBalance, setAccountBalance] = useState<number | null>(0);
   const [transactions, setTransactions] = useState<Transaction[] | null>(null);
-  const [historicalBuckets, setHistoricalBuckets] = useState<Bucket[] | null>(
-    null
-  );
+  const [historicalBuckets, setHistoricalBuckets] = useState<Bucket[] | null>(null);
   // const [adjustments, setAdjustments] = useState<Adjustments | {}>({});
   const [adjustments, setAdjustments] = useSessionStorage("adjustments", null);
 
@@ -32,15 +30,13 @@ export default function Home() {
   /* TODO:
     - [ ] Enable / Disable adjustment
     - [ ] Disconnect bank account
+    - [ ] Create multiple reports
     ===== Future State
     - [ ] Move to reducers
     - [ ] Storing the adjustments - move to stupabase
     */
 
-  const sumAccountBalances = (
-    accounts: Account[],
-    transactions: Transaction[]
-  ) => {
+  const sumAccountBalances = (accounts: Account[], transactions: Transaction[]) => {
     let balances: number[] = [];
     let accountBalance: number = 0;
     accounts?.map((account: Account) => {
@@ -52,14 +48,8 @@ export default function Home() {
     return accountBalance;
   };
 
-  const createHistoricalBuckets = async (
-    transactions: Transaction[],
-    accountBalance: number
-  ) => {
-    const historicalBuckets = await getHistoricalBuckets(
-      transactions,
-      accountBalance
-    );
+  const createHistoricalBuckets = async (transactions: Transaction[], accountBalance: number) => {
+    const historicalBuckets = await getHistoricalBuckets(transactions, accountBalance);
 
     setHistoricalBuckets(historicalBuckets);
   };
@@ -70,6 +60,7 @@ export default function Home() {
       name: null,
       amount: 0,
       bucket_id: modifiedBucket.id,
+      enabled: true,
     };
 
     setAdjustments({
@@ -84,36 +75,34 @@ export default function Home() {
     modifiedBucket: Bucket,
     updatedAdjustment: Adjustment,
     newAmount?: string,
-    newName?: string
+    newName?: string,
+    enabled?: boolean
   ) => {
     // Udpate the adjustments state
     const newAdjustments = { ...adjustments };
 
     if (newAmount) {
-      newAdjustments[modifiedBucket.month].find(
-        (adjustment) => adjustment.id === updatedAdjustment.id
-      ).amount = ~~newAmount;
+      newAdjustments[modifiedBucket.month].find((adjustment) => adjustment.id === updatedAdjustment.id).amount =
+        ~~newAmount;
     }
 
     if (newName) {
-      newAdjustments[modifiedBucket.month].find(
-        (adjustment) => adjustment.id === updatedAdjustment.id
-      ).name = newName;
+      newAdjustments[modifiedBucket.month].find((adjustment) => adjustment.id === updatedAdjustment.id).name = newName;
+    }
+
+    if (enabled !== null) {
+      newAdjustments[modifiedBucket.month].find((adjustment) => adjustment.id === updatedAdjustment.id).enabled =
+        enabled;
     }
 
     setAdjustments(newAdjustments);
   };
 
-  const deleteAdjustment = (
-    modifiedBucket: Bucket,
-    updatedAdjustment: Adjustment
-  ) => {
+  const deleteAdjustment = (modifiedBucket: Bucket, updatedAdjustment: Adjustment) => {
     // Udpate the adjustments state
     let newAdjustments = { ...adjustments };
 
-    newAdjustments[modifiedBucket.month] = newAdjustments[
-      modifiedBucket.month
-    ].filter(
+    newAdjustments[modifiedBucket.month] = newAdjustments[modifiedBucket.month].filter(
       (adjustment: Adjustment) => adjustment.id !== updatedAdjustment.id
     );
 
@@ -127,9 +116,6 @@ export default function Home() {
     const revenue = amounts.filter((amount) => amount > 0);
     const revenueTotal = revenue.reduce((a, b) => a + b, 0);
 
-    // console.log(expenses);
-    // console.log(revenue);
-
     const profitLoss: { expenses: number; revenue: number } = {
       expenses: expensesTotal,
       revenue: revenueTotal,
@@ -140,13 +126,7 @@ export default function Home() {
 
   const projectedBuckets = useMemo(() => {
     if (historicalBuckets) {
-      let buckets: Bucket[] = getProjectedBuckets(
-        6,
-        historicalBuckets,
-        adjustments,
-        accountBalance,
-        transactions
-      );
+      let buckets: Bucket[] = getProjectedBuckets(6, historicalBuckets, adjustments, accountBalance, transactions);
       return buckets;
     }
   }, [historicalBuckets, adjustments]);
@@ -158,20 +138,14 @@ export default function Home() {
   } = {
     amount: projectedBuckets?.slice(-1).pop().balance,
     change: projectedBuckets?.slice(-1).pop().balance - accountBalance,
-    changePercentage: percentChange(
-      accountBalance,
-      projectedBuckets?.slice(-1).pop().balance
-    ),
+    changePercentage: percentChange(accountBalance, projectedBuckets?.slice(-1).pop().balance),
   };
 
   useEffect(() => {
     if (!accessToken) return;
     getTransactions(accessToken).then((data) => {
       if (data.accounts) {
-        let accountBalance: number = sumAccountBalances(
-          data.accounts,
-          data.transactions
-        );
+        let accountBalance: number = sumAccountBalances(data.accounts, data.transactions);
         setAccountBalance(accountBalance);
         setTransactions(data.transactions);
         setAccounts(data.accounts);
@@ -202,10 +176,7 @@ export default function Home() {
 
         <div className={styles["header-right"]}>
           <div className={styles["actions"]}>
-            <PlaidLink
-              setAccessToken={setAccessToken}
-              accessToken={accessToken}
-            />
+            <PlaidLink setAccessToken={setAccessToken} accessToken={accessToken} />
           </div>
         </div>
       </header>
@@ -214,8 +185,7 @@ export default function Home() {
         {/* start: balance-header */}
         <div className={styles["balance-header"]}>
           <div className={clsx(styles["transaction-date"])}>
-            Available Balance (All Accounts){" "}
-            {format(sub(new Date(), { months: 1 }), "MMM ’yy")}
+            Available Balance as of {format(startOfMonth(new Date()), "MMM dd ’yy")} (All Accounts)
           </div>
           <h2 className="font-mono">
             {accounts
@@ -235,10 +205,8 @@ export default function Home() {
               <span
                 className={clsx(
                   {
-                    "text-green-500":
-                      finalMonthBalance.change - accountBalance > 0,
-                    "text-red-500":
-                      finalMonthBalance.change - accountBalance < 0,
+                    "text-green-500": finalMonthBalance.change - accountBalance > 0,
+                    "text-red-500": finalMonthBalance.change - accountBalance < 0,
                   },
                   "font-mono"
                 )}
@@ -249,10 +217,7 @@ export default function Home() {
               </span>
 
               <span className={styles["balance-summary-date"]}>
-                {format(
-                  parseISO(projectedBuckets?.slice(-1).pop().month),
-                  "MMM ’yy"
-                )}
+                {format(parseISO(projectedBuckets?.slice(-1).pop().month), "MMM ’yy")}
               </span>
             </div>
           ) : null}
@@ -271,17 +236,14 @@ export default function Home() {
           {historicalBuckets
             ? historicalBuckets.map((bucket: Bucket) => (
                 <div key={bucket.month} className={styles["bucket"]}>
-                  <div className={styles["bucket-month"]}>
-                    {format(parseISO(bucket.month), "MMM ’yy")}
-                  </div>
+                  <div className={styles["bucket-month"]}>{format(parseISO(bucket.month), "MMM ’yy")}</div>
                   <div className={styles["bucket-balance"]}>
                     {formatUSD(bucket.balance, { maximumFractionDigits: 2 })}
                   </div>
                   {/* start: balance-group */}
                   <div className={styles["bucket-balance-group"]}>
                     <div className={clsx(styles["profit-loss-total"])}>
-                      Net{" "}
-                      {formatUSD(bucket.total, { maximumFractionDigits: 2 })}
+                      Net {formatUSD(bucket.total, { maximumFractionDigits: 2 })}
                     </div>
                     <div className={styles["profit-loss"]}>
                       <div className={clsx(styles["profit-loss-revenue"])}>
@@ -300,10 +262,7 @@ export default function Home() {
                   {/* start: transaction-list */}
                   <ul className={styles["transaction-list"]}>
                     {bucket.transactions.map((transaction: Transaction) => (
-                      <li
-                        key={transaction.transaction_id}
-                        className={clsx(styles["transaction-item"])}
-                      >
+                      <li key={transaction.transaction_id} className={clsx(styles["transaction-item"])}>
                         <div className={clsx(styles["transaction-date"])}>
                           {format(parseISO(transaction.date), "MM-dd")}
                         </div>
@@ -330,9 +289,7 @@ export default function Home() {
           {projectedBuckets
             ? projectedBuckets.map((bucket: Bucket) => (
                 <div key={bucket.month} className={styles["bucket"]}>
-                  <div className={styles["bucket-month"]}>
-                    {format(parseISO(bucket.month), "MMM ’yy")}
-                  </div>
+                  <div className={styles["bucket-month"]}>{format(parseISO(bucket.month), "MMM ’yy")}</div>
                   <div className={styles["bucket-balance"]}>
                     {formatUSD(bucket.balance, {
                       maximumFractionDigits: 2,
@@ -341,19 +298,14 @@ export default function Home() {
                   {/* start: balance-group */}
                   <div className={styles["bucket-balance-group"]}>
                     <div className={clsx(styles["profit-loss-total"])}>
-                      Net{" "}
-                      {formatUSD(bucket.total, { maximumFractionDigits: 2 })}
+                      Net {formatUSD(bucket.total, { maximumFractionDigits: 2 })}
                     </div>
                     <div className={styles["profit-loss"]}>
                       {bucket.transactions.length > 0 ? (
                         <>
                           <div className={clsx(styles["profit-loss-revenue"])}>
                             {formatUSD(
-                              sumArray(
-                                getTransactionAmounts(
-                                  bucket.transactions
-                                ).filter((amount) => amount > 0)
-                              ),
+                              sumArray(getTransactionAmounts(bucket.transactions).filter((amount) => amount > 0)),
                               { maximumFractionDigits: 2 }
                             )}
                           </div>
@@ -394,58 +346,56 @@ export default function Home() {
                   </div>
                   <div className={styles["transaction-list"]}>
                     {adjustments && adjustments[bucket.month]
-                      ? adjustments[bucket.month].map(
-                          (adjustment: Adjustment, i) => (
-                            <div
-                              key={adjustment.id}
-                              className={clsx(
-                                "input-group-inline",
-                                styles["adjustment-row"]
-                              )}
-                            >
-                              <input
-                                className={styles["adjustment-input-name"]}
-                                type="text"
-                                defaultValue={adjustment.name || null}
-                                placeholder={`Adjustment ${i + 1}`}
-                                onChange={(e) => {
-                                  updateAdjustments(
-                                    bucket,
-                                    adjustment,
-                                    undefined,
-                                    e.target.value
-                                  );
+                      ? adjustments[bucket.month].map((adjustment: Adjustment, i) => (
+                          <div key={adjustment.id} className={clsx("input-group-inline", styles["adjustment-row"])}>
+                            <input
+                              className={clsx(styles["adjustment-input-name"], {
+                                [styles["disabled"]]: !adjustment.enabled,
+                              })}
+                              type="text"
+                              defaultValue={adjustment.name || null}
+                              placeholder={`Adjustment ${i + 1}`}
+                              onChange={(e) => {
+                                updateAdjustments(bucket, adjustment, undefined, e.target.value, true);
+                              }}
+                            />
+                            <input
+                              className={clsx(styles["adjustment-input-value"], {
+                                [styles["disabled"]]: !adjustment.enabled,
+                              })}
+                              type="number"
+                              defaultValue={adjustment.amount || "0"}
+                              onChange={(e) => {
+                                updateAdjustments(bucket, adjustment, e.target.value, undefined, true);
+                              }}
+                              onWheel={() => {
+                                return false;
+                              }}
+                            />
+                            <div className={styles["adjustment-actions"]}>
+                              <div
+                                className={clsx("button button-xsmall button-primary", styles["adjustment-toggle"])}
+                                onClick={(e) => {
+                                  updateAdjustments(bucket, adjustment, undefined, undefined, !adjustment.enabled);
                                 }}
-                              />
-                              <input
-                                className={styles["adjustment-input-value"]}
-                                type="number"
-                                defaultValue={adjustment.amount || "0"}
-                                onChange={(e) => {
-                                  updateAdjustments(
-                                    bucket,
-                                    adjustment,
-                                    e.target.value,
-                                    undefined
-                                  );
+                              >
+                                {adjustment.enabled ? (
+                                  <span className={styles["adjustment-toggle-icon"]}>&#9863;</span>
+                                ) : (
+                                  <span className={styles["adjustment-toggle-icon"]}>&#9862;</span>
+                                )}
+                              </div>
+                              <div
+                                className={clsx("button button-xsmall button-primary", styles["adjustment-delete"])}
+                                onClick={(e) => {
+                                  deleteAdjustment(bucket, adjustment);
                                 }}
-                                onWheel={() => {
-                                  return false;
-                                }}
-                              />
-                              <div className={styles["adjustment-actions"]}>
-                                <div
-                                  className="button button-xsmall button-round button-primary"
-                                  onClick={(e) => {
-                                    deleteAdjustment(bucket, adjustment);
-                                  }}
-                                >
-                                  &#10005;
-                                </div>
+                              >
+                                &#10005;
                               </div>
                             </div>
-                          )
-                        )
+                          </div>
+                        ))
                       : null}
                   </div>
                   {/* end: adjustment-list */}

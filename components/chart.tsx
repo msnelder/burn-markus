@@ -1,6 +1,4 @@
-import { formatUSD } from "../utils/format";
-import { percentChange } from "../utils/math";
-
+import { format, parseISO } from "date-fns";
 import {
   Area,
   AreaChart,
@@ -11,7 +9,10 @@ import {
   YAxis,
 } from "recharts";
 
-import { format, parseISO } from "date-fns";
+import { formatUSD } from "../utils/format";
+import { percentChange } from "../utils/math";
+
+import styles from "./chart.module.css";
 
 export default function Chart({
   data,
@@ -69,9 +70,11 @@ export default function Chart({
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="custom-tooltip">
-          <p style={{ margin: 0 }}>{format(parseISO(label), "MMM ’yy")}</p>
-          <p style={{ margin: 0, fontSize: "0.75rem" }}>
+        <div className={styles["tooltip"]}>
+          <p className={styles["tooltip-date"]}>
+            {format(parseISO(label), "MMM ’yy")}
+          </p>
+          <p className={styles["tooltip-value"]}>
             {formatUSD(payload[0].value, {
               maximumFractionDigits: 2,
             })}{" "}

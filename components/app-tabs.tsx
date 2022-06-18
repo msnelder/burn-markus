@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { format } from "date-fns";
 
 import styles from "./app-tabs.module.css";
 
@@ -18,7 +19,7 @@ const AppTabs = () => {
         })}
       >
         <span className={styles["tab-icon"]}>&#10065;</span>
-        Active report
+        New Report {format(new Date(), "yyyy-mm-dd")}
       </div>
       <div
         className={clsx(styles["tab-add"], {
