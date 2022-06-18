@@ -57,8 +57,8 @@ export default function Chart({
     return moment(month).format("MMM 'YY");
   };
 
-  const percentGainColor = (payload: number) => {
-    if (payload > 0) {
+  const percentGainColor = (newValue: number, originalValue: number) => {
+    if (newValue - originalValue > 0) {
       return "var(--green)";
     } else {
       return "var(--red)";
@@ -74,8 +74,10 @@ export default function Chart({
             {formatUSD(payload[0].value, {
               maximumFractionDigits: 2,
             })}{" "}
-            <span style={{ color: percentGainColor(payload[0].value) }}>
-              ({payload[0].value >= 0 ? "+" : null}
+            <span
+              style={{ color: percentGainColor(payload[0].value, balance) }}
+            >
+              ({payload[0].value - balance >= 0 ? "+" : null}
               {Math.round(100 * ((payload[0].value - balance) / balance))}
               {"%"})
             </span>

@@ -153,17 +153,19 @@ export default function Home() {
   const finalMonthBalance: {
     amount: number;
     change: number;
+    changePercentage: number;
   } = {
     amount: projectedBuckets?.slice(-1).pop().balance,
-    change: Math.round(
+    change: projectedBuckets?.slice(-1).pop().balance - accountBalance,
+    changePercentage: Math.round(
       100 *
         ((projectedBuckets?.slice(-1).pop().balance - accountBalance) /
           accountBalance)
     ),
   };
 
-  const percentGainColor = (payload: number) => {
-    if (payload > 0) {
+  const percentGainColor = (newValue: number, originalValue: number) => {
+    if (newValue - originalValue > 0) {
       return "var(--green)";
     } else {
       return "var(--red)";
@@ -234,13 +236,15 @@ export default function Home() {
 
               <span
                 style={{
-                  color: percentGainColor(finalMonthBalance.change),
+                  color:
+                    finalMonthBalance.change - accountBalance > 0
+                      ? "var(--green)"
+                      : "var(--red)",
                 }}
               >
                 {" "}
-                {`(${finalMonthBalance.amount >= 0 ? "+" : null}${
-                  finalMonthBalance.change
-                }%)`}
+                ({finalMonthBalance.change >= 0 ? "+" : null}
+                {`${finalMonthBalance.changePercentage}%`})
               </span>
 
               <span className={styles["balance-summary-date"]}>
