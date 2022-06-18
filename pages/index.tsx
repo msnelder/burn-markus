@@ -357,12 +357,12 @@ export default function Home() {
                         })}
                       </div>
                       <div className={clsx(styles["profit-loss-expense"])}>
-                        {formatUSD(sumAmounts(bucket.amounts).expenses, {
+                        {formatUSD(bucket.projected_total, {
                           maximumFractionDigits: 2,
                         })}
                       </div>
                       <div className={clsx(styles["profit-loss-expense"])}>
-                        {formatUSD(bucket.projected_total, {
+                        {formatUSD(sumAmounts(bucket.amounts).expenses, {
                           maximumFractionDigits: 2,
                         })}
                       </div>
