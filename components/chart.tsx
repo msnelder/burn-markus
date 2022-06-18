@@ -1,4 +1,5 @@
 import { formatUSD } from "../utils/format";
+import { percentChange } from "../utils/math";
 
 import {
   Area,
@@ -78,7 +79,7 @@ export default function Chart({
               style={{ color: percentGainColor(payload[0].value, balance) }}
             >
               ({payload[0].value - balance >= 0 ? "+" : null}
-              {Math.round(100 * ((payload[0].value - balance) / balance))}
+              {percentChange(balance, payload[0].value)}
               {"%"})
             </span>
           </p>

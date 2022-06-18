@@ -10,7 +10,7 @@ import { getTransactions } from "../lib/plaid/transactions";
 import { getHistoricalBuckets, getProjectedBuckets } from "../lib/burn/buckets";
 import { useSessionStorage } from "../lib/hooks/useSessionStorage";
 import { getTransactionAmounts } from "../lib/burn/transactions";
-import { sumArray } from "../utils/math";
+import { sumArray, percentChange } from "../utils/math";
 
 import styles from "./index.module.css";
 import AppTabs from "../components/app-tabs";
@@ -30,7 +30,6 @@ export default function Home() {
   const today = new Date();
 
   /* TODO:
-    - [ ] Fix the account balance to exclude all expenses month-to-date
     - [ ] Enable / Disable adjustment
     - [ ] Disconnect bank account
     ===== Future State
@@ -159,10 +158,9 @@ export default function Home() {
   } = {
     amount: projectedBuckets?.slice(-1).pop().balance,
     change: projectedBuckets?.slice(-1).pop().balance - accountBalance,
-    changePercentage: Math.round(
-      100 *
-        ((projectedBuckets?.slice(-1).pop().balance - accountBalance) /
-          accountBalance)
+    changePercentage: percentChange(
+      accountBalance,
+      projectedBuckets?.slice(-1).pop().balance
     ),
   };
 
