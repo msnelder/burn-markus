@@ -1,13 +1,5 @@
 import { format, parseISO } from "date-fns";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { formatUSD } from "../utils/format";
 import { percentChange } from "../utils/math";
@@ -61,9 +53,9 @@ export default function Chart({
 
   const percentGainColor = (newValue: number, originalValue: number) => {
     if (newValue - originalValue > 0) {
-      return "var(--green)";
+      return "var(--green-400)";
     } else if (newValue - originalValue < 0) {
-      return "var(--red)";
+      return "var(--red-400)";
     }
   };
 
@@ -71,16 +63,12 @@ export default function Chart({
     if (active && payload && payload.length) {
       return (
         <div className={styles["tooltip"]}>
-          <p className={styles["tooltip-date"]}>
-            {format(parseISO(label), "MMM ’yy")}
-          </p>
+          <p className={styles["tooltip-date"]}>{format(parseISO(label), "MMM ’yy")}</p>
           <p className={styles["tooltip-value"]}>
             {formatUSD(payload[0].value, {
               maximumFractionDigits: 2,
             })}{" "}
-            <span
-              style={{ color: percentGainColor(payload[0].value, balance) }}
-            >
+            <span style={{ color: percentGainColor(payload[0].value, balance) }}>
               ({payload[0].value - balance >= 0 ? "+" : null}
               {percentChange(balance, payload[0].value)}
               {"%"})
@@ -129,25 +117,13 @@ export default function Chart({
         />
         <defs>
           <linearGradient id="splitColor" x1="0" y1="0" x2="0" y2="1">
-            <stop offset={0} stopColor="#63cb63" stopOpacity={1} />
-            <stop
-              offset={colorChangeOffset}
-              stopColor="#63cb63"
-              stopOpacity={0.05}
-            />
-            <stop
-              offset={colorChangeOffset}
-              stopColor="#fb806c"
-              stopOpacity={0.05}
-            />
+            <stop offset={0} stopColor="#7cda7c" stopOpacity={1} />
+            <stop offset={colorChangeOffset} stopColor="#7cda7c" stopOpacity={0.05} />
+            <stop offset={colorChangeOffset} stopColor="#fb806c" stopOpacity={0.05} />
             <stop offset={1} stopColor="#fb806c" stopOpacity={1} />
           </linearGradient>
         </defs>
-        <Tooltip
-          position={{ y: 0 }}
-          content={<CustomTooltip />}
-          isAnimationActive={false}
-        />
+        <Tooltip position={{ y: 0 }} content={<CustomTooltip />} isAnimationActive={false} />
         <Area
           type="monotone"
           dataKey={areaKey}

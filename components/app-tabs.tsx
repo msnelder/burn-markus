@@ -19,7 +19,7 @@ const AppTabs = () => {
         })}
       >
         <span className={styles["tab-icon"]}>&#10065;</span>
-        New Report {format(new Date(), "yyyy-mm-dd")}
+        Studio Model {format(new Date(), "yyyy-mm-dd")}
       </div>
       <div
         className={clsx(styles["tab-add"], {
@@ -27,7 +27,7 @@ const AppTabs = () => {
         })}
       >
         <div className={styles["tab-add-button"]}>&#10158;</div>
-        New Report
+        New Model
       </div>
     </div>
   );

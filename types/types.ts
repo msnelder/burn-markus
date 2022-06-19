@@ -41,3 +41,5 @@ export type Bucket = {
   projected_total: number;
   balance: number;
 };
+
+export type Report = {};

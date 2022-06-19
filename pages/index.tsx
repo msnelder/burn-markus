@@ -22,15 +22,14 @@ export default function Home() {
   const [accountBalance, setAccountBalance] = useState<number | null>(0);
   const [transactions, setTransactions] = useState<Transaction[] | null>(null);
   const [historicalBuckets, setHistoricalBuckets] = useState<Bucket[] | null>(null);
-  // const [adjustments, setAdjustments] = useState<Adjustments | {}>({});
   const [adjustments, setAdjustments] = useSessionStorage("adjustments", null);
+  const [reports, setReports] = useSessionStorage("reports", null);
 
   const today = new Date();
 
   /* TODO:
-    - [ ] Enable / Disable adjustment
-    - [ ] Disconnect bank account
     - [ ] Create multiple reports
+    - [ ] Disconnect bank account
     ===== Future State
     - [ ] Move to reducers
     - [ ] Storing the adjustments - move to stupabase
@@ -170,7 +169,10 @@ export default function Home() {
 
       <header className={styles["header"]}>
         <div className={styles["header-left"]}>
-          <div className="title">Burn</div>
+          <div className={styles["header-logo"]}>
+            <img className={styles["header-mark"]} src="/images/logo.svg" alt="" />
+            Burn
+          </div>
           <AppTabs />
         </div>
 
@@ -205,8 +207,8 @@ export default function Home() {
               <span
                 className={clsx(
                   {
-                    "text-green-500": finalMonthBalance.change - accountBalance > 0,
-                    "text-red-500": finalMonthBalance.change - accountBalance < 0,
+                    "text-green-400": finalMonthBalance.change - accountBalance > 0,
+                    "text-red-400": finalMonthBalance.change - accountBalance < 0,
                   },
                   "font-mono"
                 )}

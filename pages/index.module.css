@@ -25,8 +25,15 @@
   height: 100%;
 }
 
-.title {
+.header-logo {
+  display: flex;
+  align-items: center;
+  column-gap: 0.25rem;
   font-weight: 900;
+}
+
+.header-mark {
+  width: 1.25rem;
 }
 
 .description {
@@ -104,7 +111,7 @@
 
 .profit-loss-revenue {
   width: 100%;
-  color: var(--green);
+  color: var(--green-400);
   font-size: var(--font-size-xxs);
   text-align: right;
 }
@@ -140,7 +147,7 @@
   text-align: right;
 }
 .transaction-amount.income {
-  color: var(--green);
+  color: var(--green-400);
 }
 
 /* Adjustments */
