@@ -1,9 +1,15 @@
 import { Report } from "../types/types";
-import s from "./app-tabs.module.css";
+import s from "./report-tabs.module.css";
 import clsx from "clsx";
 import { createReport } from "../lib/burn/reports";
 
-const AppTabs = ({ reports, setReports }: { reports: Report[]; setReports: (reports: Report[]) => void }) => {
+const ReportTabs = ({
+  reports,
+  setReports,
+}: {
+  reports: Report[];
+  setReports: (reports: Report[]) => void;
+}) => {
   const setActiveReport = (updatedReport: Report) => {
     let newReports: Report[] = [...reports];
 
@@ -76,4 +82,4 @@ const AppTabs = ({ reports, setReports }: { reports: Report[]; setReports: (repo
   );
 };
 
-export default AppTabs;
+export default ReportTabs;

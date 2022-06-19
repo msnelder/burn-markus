@@ -8,15 +8,18 @@ import { getTransactions } from "../lib/plaid/transactions";
 import { getHistoricalBuckets, getProjectedBuckets } from "../lib/burn/buckets";
 import { createReport, getActiveReport } from "../lib/burn/reports";
 import { getTransactionAmounts } from "../lib/burn/transactions";
+import { supabase } from "../utils/supabase-client";
+import Auth from "../components/auth";
+import UserAccount from "../components/account";
 import PlaidLink from "../components/simple-plaid-link";
 import Chart from "../components/chart";
-import AppTabs from "../components/app-tabs";
+import ReportTabs from "../components/reports-tabs";
 import BalanceHeader from "../components/balance-header";
 import BucketHistorical from "../components/bucket-historical";
 import BucketProjected from "../components/bucket-projected";
-import { report } from "process";
 
 export default function Home() {
+  const [session, setSession] = useState(null);
   const [accessToken, setAccessToken] = useSessionStorage("access_token", null);
   const [accounts, setAccounts] = useState<Account[] | null>(null);
   const [accountBalance, setAccountBalance] = useState<number | null>(0);
@@ -26,7 +29,7 @@ export default function Home() {
   const [reports, setReports] = useSessionStorage("reports", null);
 
   /* TODO:
-    - [ ] Create multiple reports
+    - [ ] Deleting related adjustments on report delete
     - [ ] Disconnect bank account
     ===== Future State
     - [ ] Move to reducers
@@ -66,6 +69,11 @@ export default function Home() {
   }, [historicalBuckets, adjustments, reports]);
 
   useEffect(() => {
+    setSession(supabase.auth.session());
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
     if (!accessToken) return;
     getTransactions(accessToken).then((data) => {
       if (data.accounts) {
@@ -96,6 +104,7 @@ export default function Home() {
 
   return (
     <div className="container">
+      {!session ? <Auth /> : <UserAccount key={session.user.id} session={session} />}
       <Head>
         <title>Burn: We all die someday</title>
         <link rel="icon" href="/favicon.ico" />
@@ -107,7 +116,7 @@ export default function Home() {
             <img className={s["header-mark"]} src="/images/logo.svg" alt="" />
             Burn
           </div>
-          {reports ? <AppTabs reports={reports} setReports={setReports} /> : null}
+          {reports ? <ReportTabs reports={reports} setReports={setReports} /> : null}
         </div>
 
         <div className={s["header-right"]}>

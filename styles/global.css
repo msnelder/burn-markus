@@ -39,14 +39,12 @@ Variables
 
   /* Variables: Typography
   --------------------------- */
-  --font-family-sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont,
-    Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans,
-    Helvetica Neue, sans-serif;
-  --font-family-heading: "IBM Plex Sans", -apple-system, BlinkMacSystemFont,
-    Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans,
-    Helvetica Neue, sans-serif;
-  --font-family-mono: "IBM Plex Mono", "Menlo", "DejaVu Sans Mono",
-    "Bitstream Vera Sans Mono", Courier, monospace;
+  --font-family-sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu,
+    Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  --font-family-heading: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu,
+    Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  --font-family-mono: "IBM Plex Mono", "Menlo", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", Courier,
+    monospace;
 
   --font-size-xxs: 0.75rem; /* 12px */
   --font-size-xs: 0.875rem; /* 14px */
@@ -674,7 +672,7 @@ Cards
 /*
 Overlay
 --------------------------- */
-#overlay {
+.overlay {
   display: none;
   position: fixed;
   top: 0;
