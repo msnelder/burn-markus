@@ -1,0 +1,21 @@
+/* =================================== */
+/* Balance Header */
+/* =================================== */
+
+.balance-header {
+  padding-top: 1.25rem;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+
+.balance-summary {
+  display: flex;
+  column-gap: 0.25rem;
+  align-items: center;
+  padding-left: 0.5rem;
+}
+
+.balance-summary-date {
+  font-size: var(--font-size-xs);
+  color: var(--gray-600);
+}

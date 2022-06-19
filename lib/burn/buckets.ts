@@ -1,4 +1,4 @@
-import { Transaction, Bucket, Adjustments, Adjustment } from "../../types/types";
+import { Transaction, Bucket, Adjustments, Adjustment, Report } from "../../types/types";
 import { v4 as uuidv4 } from "uuid";
 import { add, format, parseISO } from "date-fns";
 import { getTransactionAmounts, getTransactionsByMonth } from "./transactions";
@@ -63,7 +63,8 @@ const getProjectedBuckets = (
   historicalBuckets: Bucket[],
   adjustments: Adjustments,
   accountBalance: number,
-  transactions: Transaction[]
+  transactions: Transaction[],
+  activeReport?: Report
 ) => {
   let totals = [];
   let projectedTotal = 0;
@@ -87,7 +88,7 @@ const getProjectedBuckets = (
 
     if (adjustments && adjustments[newMonth]) {
       adjustmentTotal = adjustments[newMonth]
-        .filter((adjustment) => adjustment.enabled !== false)
+        .filter((adjustment) => adjustment.enabled !== false && adjustment.report_id === activeReport.id)
         .reduce((accumulator, adjustment: Adjustment) => {
           if (adjustment.enabled) {
             adjustmentAmounts.push(adjustment.amount);
@@ -97,7 +98,8 @@ const getProjectedBuckets = (
     }
 
     adjustmentTotal =
-      adjustmentTotal + sumArray(getTransactionAmounts(thisMonthsTransactions).filter((amount) => amount > 0));
+      adjustmentTotal +
+      sumArray(getTransactionAmounts(thisMonthsTransactions).filter((amount) => amount > 0));
 
     // Get the transaction totals from each historical bucket
     historicalBuckets.map((bucket: Bucket) => {
@@ -130,4 +132,19 @@ const getProjectedBuckets = (
   return projectedBuckets;
 };
 
-export { getBucketIndex, getHistoricalBuckets, getProjectedBuckets };
+const sumBucketAmounts = (bucket: Bucket) => {
+  const expenses = bucket.amounts.filter((amount) => amount < 0);
+  const expensesTotal = expenses.reduce((a, b) => a + b, 0);
+
+  const revenue = bucket.amounts.filter((amount) => amount > 0);
+  const revenueTotal = revenue.reduce((a, b) => a + b, 0);
+
+  const profitLoss: { expenses: number; revenue: number } = {
+    expenses: expensesTotal,
+    revenue: revenueTotal,
+  };
+
+  return profitLoss;
+};
+
+export { getBucketIndex, getHistoricalBuckets, getProjectedBuckets, sumBucketAmounts };

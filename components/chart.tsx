@@ -1,10 +1,10 @@
 import { format, parseISO } from "date-fns";
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { formatUSD } from "../utils/format";
 import { percentChange } from "../utils/math";
 
-import styles from "./chart.module.css";
+import s from "./chart.module.css";
 
 export default function Chart({
   data,
@@ -62,9 +62,9 @@ export default function Chart({
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className={styles["tooltip"]}>
-          <p className={styles["tooltip-date"]}>{format(parseISO(label), "MMM ’yy")}</p>
-          <p className={styles["tooltip-value"]}>
+        <div className={s["tooltip"]}>
+          <p className={s["tooltip-date"]}>{label ? format(parseISO(label), "MMM ’yy") : null}</p>
+          <p className={s["tooltip-value"]}>
             {formatUSD(payload[0].value, {
               maximumFractionDigits: 2,
             })}{" "}
@@ -94,7 +94,6 @@ export default function Chart({
           left: 20,
         }}
       >
-        {/* <CartesianGrid strokeDasharray="3 3" /> */}
         <XAxis
           dataKey={xAxisKey}
           tickFormatter={monthFormatter}

@@ -24,8 +24,9 @@ export type Adjustment = {
   id: string;
   name: string;
   amount: number;
-  bucket_id: string;
   enabled: boolean;
+  bucket_id: string;
+  report_id: string;
 };
 
 export type Adjustments = {
@@ -42,4 +43,11 @@ export type Bucket = {
   balance: number;
 };
 
-export type Report = {};
+export type Report = {
+  id: string;
+  created_on: Date;
+  name: string;
+  projected_months: number;
+  expense_projecion: string;
+  active: boolean;
+};
