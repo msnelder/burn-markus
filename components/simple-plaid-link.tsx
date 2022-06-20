@@ -1,14 +1,9 @@
 import React, { useCallback, useState } from "react";
+import { Home, Zap, ZapOff } from "react-feather";
 
 import { usePlaidLink, PlaidLinkOnSuccess } from "react-plaid-link";
 
-const PlaidLink = ({
-  setAccessToken,
-  accessToken,
-}: {
-  setAccessToken: any;
-  accessToken: string;
-}) => {
+const PlaidLink = ({ setAccessToken, accessToken }: { setAccessToken: any; accessToken: string }) => {
   const [token, setToken] = useState<string | null>(null);
 
   // get link_token from your server when component mounts
@@ -46,12 +41,13 @@ const PlaidLink = ({
 
   return (
     <>
-      <button
-        onClick={() => open()}
-        disabled={!ready || accessToken !== null}
-        className="button button-primary"
-      >
-        Connect a bank account
+      <button onClick={() => open()} className="button button-small button-primary text-gray-100">
+        {!ready || accessToken !== null ? <Zap size={12} /> : <ZapOff size={12} color={"var(--gray-300)"} />}
+        {!ready || accessToken !== null ? (
+          <span style={{ color: "var(--gray-300)" }}>Connected</span>
+        ) : (
+          <span style={{ color: "var(--gray-300)" }}>Connect a Bank</span>
+        )}
       </button>
     </>
   );

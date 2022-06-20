@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^1.35.3",
+    "boring-avatars": "^1.7.0",
     "clsx": "^1.1.1",
     "cors": "^2.8.5",
     "date-fns": "^2.28.0",
@@ -15,6 +16,7 @@
     "plaid": "^9.10.1",
     "react": "17.0.2",
     "react-dom": "17.0.2",
+    "react-feather": "^2.0.10",
     "react-hook-form": "^7.27.0",
     "react-plaid-link": "^3.3.0",
     "recharts": "^2.1.9",

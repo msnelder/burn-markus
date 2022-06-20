@@ -482,6 +482,7 @@ Buttons
 .button {
   display: flex;
   align-items: center;
+  column-gap: 0.5rem;
   height: 2rem; /* 32px */
   padding-left: calc(var(--spacer) * 3);
   padding-right: calc(var(--spacer) * 3);
@@ -497,14 +498,21 @@ Buttons
   color: var(--gray-900);
   text-decoration: none;
   cursor: pointer;
+  transition: all 100ms ease-in-out;
 }
 .button:focus {
   border-color: var(--yellow-500);
   box-shadow: 0 0 0 2px var(--yellow-400);
   outline: none;
+  transition: all 150ms ease-in-out;
 }
 .button:visited {
   color: var(--gray-900);
+  transition: all 150ms ease-in-out;
+}
+.button:hover {
+  background-color: var(--gray-200);
+  transition: all 150ms ease-in-out;
 }
 
 .button-block {
@@ -523,6 +531,19 @@ Buttons
 }
 .button-primary:visited {
   color: var(--yellow-400);
+}
+
+.button-danger {
+  background-color: var(--gray-800);
+  border-color: var(--gray-900);
+  color: var(--red-400);
+}
+.button-danger:hover {
+  background-color: var(--gray-900);
+  color: var(--red-400);
+}
+.button-danger:visited {
+  color: var(--red-400);
 }
 
 .button-round {
@@ -583,38 +604,49 @@ Forms: Input - Text
 --------------------------- */
 input[type="text"],
 input[type="email"],
-input[type="number"] {
+input[type="number"],
+input[type="website"] {
   all: unset;
   box-sizing: border-box;
   height: 2rem; /* 32px */
   min-width: 160px;
   padding-left: calc(var(--spacer) * 3);
   padding-right: calc(var(--spacer) * 3);
-  background-color: #fff;
-  border: 1px solid var(--gray-400);
+  background-color: #2b2b29;
+  border: 1px solid var(--gray-800);
   border-radius: var(--border-radius-base);
   font-size: var(--font-size-xs);
   font-weight: var(--font-medium);
 }
 input[type="text"]::placeholder,
 input[type="email"]::placeholder,
-input[type="number"]::placeholder {
+input[type="number"]::placeholder,
+input[type="website"]::placeholder {
   color: var(--gray-500);
 }
 input[type="text"]:focus,
 input[type="email"]:focus,
-input[type="number"]::focus {
+input[type="number"]::focus,
+input[type="website"]::focus {
   border-color: var(--yellow-400);
   box-shadow: 0 0 0 2px var(--yellow-400);
 }
 
 input[type="text"].input-large,
 input[type="email"].input-large,
-input[type="number"].input-large {
+input[type="number"].input-large,
+input[type="website"].input-large {
   height: 2.5rem; /* 40px */
   padding-left: calc(var(--spacer) * 4);
   padding-right: calc(var(--spacer) * 4);
   font-size: var(--font-size-s);
+}
+
+input[type="text"].input-block,
+input[type="email"].input-block,
+input[type="number"].input-block,
+input[type="website"].input-block {
+  width: 100%;
 }
 
 input::-webkit-outer-spin-button,
@@ -631,6 +663,12 @@ input[type="number"] {
 /*
 Forms: Input Groups
 --------------------------- */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  row-gap: 0.5rem;
+}
+
 .input-group-inline {
   display: flex;
   align-items: center;
@@ -673,15 +711,18 @@ Cards
 Overlay
 --------------------------- */
 .overlay {
-  display: none;
   position: fixed;
   top: 0;
   bottom: 0;
   left: 0;
   right: 0;
   z-index: 800;
-  background-color: rgba(60, 61, 57, 0.4);
-  backdrop-filter: blur(0.5rem);
+  background-color: rgba(30, 30, 29, 0.12);
+  backdrop-filter: blur(0.25rem);
+}
+
+.overlay.hidden {
+  display: none;
 }
 
 @media (max-width: 768px) {

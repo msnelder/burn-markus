@@ -1,3 +1,33 @@
+// export type User = {
+//   app_metadata: {
+//     provider: string;
+//     providers: [];
+//   };
+//   aud: string;
+//   confirmation_sent_at: Date;
+//   confirmed_at: Date;
+//   created_at: Date;
+//   email: string;
+//   email_confirmed_at: Date;
+//   id: string;
+//   identities: [];
+//   last_sign_in_at: Date;
+//   phone: string;
+//   role: string;
+//   updated_at: Date;
+//   user_metadata: {};
+// };
+
+// export type Session = {
+//   access_token: string;
+//   expires_at: number;
+//   expires_in: number;
+//   provider_token?: string;
+//   refresh_token: string;
+//   token_type?: string;
+//   user: User;
+// };
+
 export type Account = {
   account_id: string;
   name: string;
@@ -22,6 +52,7 @@ export type Transaction = {
 
 export type Adjustment = {
   id: string;
+  created_at?: Date;
   name: string;
   amount: number;
   enabled: boolean;
@@ -45,7 +76,7 @@ export type Bucket = {
 
 export type Report = {
   id: string;
-  created_on: Date;
+  created_at: Date;
   name: string;
   projected_months: number;
   expense_projecion: string;

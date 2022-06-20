@@ -6,7 +6,7 @@ import { sumArray } from "../utils/math";
 import { useSessionStorage } from "../lib/hooks/useSessionStorage";
 import { getTransactions } from "../lib/plaid/transactions";
 import { getHistoricalBuckets, getProjectedBuckets } from "../lib/burn/buckets";
-import { createReport, getActiveReport } from "../lib/burn/reports";
+import { createReport, getActiveReport, getReports } from "../lib/burn/reports";
 import { getTransactionAmounts } from "../lib/burn/transactions";
 import { supabase } from "../utils/supabase-client";
 import Auth from "../components/auth";
@@ -17,9 +17,11 @@ import ReportTabs from "../components/reports-tabs";
 import BalanceHeader from "../components/balance-header";
 import BucketHistorical from "../components/bucket-historical";
 import BucketProjected from "../components/bucket-projected";
+import Avatar from "boring-avatars";
 
 export default function Home() {
   const [session, setSession] = useState(null);
+  const [userAccountOpen, setUserAccountOpen] = useState<boolean | null>(false);
   const [accessToken, setAccessToken] = useSessionStorage("access_token", null);
   const [accounts, setAccounts] = useState<Account[] | null>(null);
   const [accountBalance, setAccountBalance] = useState<number | null>(0);
@@ -29,11 +31,11 @@ export default function Home() {
   const [reports, setReports] = useSessionStorage("reports", null);
 
   /* TODO:
+    - [ ] Move to supabase
     - [ ] Deleting related adjustments on report delete
     - [ ] Disconnect bank account
     ===== Future State
     - [ ] Move to reducers
-    - [ ] Storing the adjustments - move to stupabase
     */
 
   const sumAccountBalances = (accounts: Account[], transactions: Transaction[]) => {
@@ -74,6 +76,7 @@ export default function Home() {
     supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
     });
+
     if (!accessToken) return;
     getTransactions(accessToken).then((data) => {
       if (data.accounts) {
@@ -94,6 +97,9 @@ export default function Home() {
   }, [transactions]); // <-- dependency array
 
   useEffect(() => {
+    if (session) {
+      getReports();
+    }
     if (!reports || reports.length === 0) {
       let newReport = createReport();
       let newReports: Report[] = [newReport];
@@ -104,7 +110,15 @@ export default function Home() {
 
   return (
     <div className="container">
-      {!session ? <Auth /> : <UserAccount key={session.user.id} session={session} />}
+      {!session ? <Auth /> : null}
+      {userAccountOpen ? (
+        <UserAccount
+          key={session.user.id}
+          session={session}
+          userAccountOpen={userAccountOpen}
+          setUserAccountOpen={setUserAccountOpen}
+        />
+      ) : null}
       <Head>
         <title>Burn: We all die someday</title>
         <link rel="icon" href="/favicon.ico" />
@@ -120,8 +134,23 @@ export default function Home() {
         </div>
 
         <div className={s["header-right"]}>
-          <div className={s["actions"]}>
+          <div className={s["header-actions"]}>
             <PlaidLink setAccessToken={setAccessToken} accessToken={accessToken} />
+            <div
+              className={s["header-avatar"]}
+              onClick={(e) => {
+                setUserAccountOpen(!userAccountOpen);
+              }}
+            >
+              {session ? (
+                <Avatar
+                  size={22}
+                  name={session.user.email}
+                  variant="marble"
+                  colors={["#E7EDEA", "#FFC52C", "#FB0D06", "#030D4F", "#CEECEF"]}
+                />
+              ) : null}
+            </div>
           </div>
         </div>
       </header>

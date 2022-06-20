@@ -115,8 +115,6 @@ input[type="number"].adjustment-input-value {
   height: 1.25rem;
   min-width: 0;
   width: 50%;
-  background-color: var(--gray-800);
-  border-color: var(--gray-700);
   text-align: right;
 }
 .adjustment-input-value.disabled {
@@ -163,8 +161,4 @@ input[type="number"].adjustment-input-value {
   width: 1.125rem;
   margin-left: 0;
   font-size: 20px;
-}
-
-.adjustment-toggle-icon {
-  margin-top: -4px;
 }

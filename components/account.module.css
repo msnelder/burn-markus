@@ -11,7 +11,15 @@
 }
 
 .header {
-  padding-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 2rem;
+}
+
+.header .button {
+  flex-grow: 0;
+  flex-shrink: 0;
 }
 
 .lead {

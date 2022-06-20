@@ -8,6 +8,7 @@ import { getTransactionAmounts } from "../lib/burn/transactions";
 import { v4 as uuidv4 } from "uuid";
 
 import s from "./buckets.module.css";
+import { Delete, Eye, EyeOff, PlusSquare, Trash2 } from "react-feather";
 
 const BucketProjected = ({
   bucket,
@@ -130,7 +131,7 @@ const BucketProjected = ({
             createAdjustment(bucket);
           }}
         >
-          &#43; Add Adjustment
+          <PlusSquare size={14} /> Add Adjustment
         </div>
       </div>
       <div className={s["transaction-list"]}>
@@ -169,11 +170,7 @@ const BucketProjected = ({
                         updateAdjustments(bucket, adjustment, undefined, undefined, !adjustment.enabled);
                       }}
                     >
-                      {adjustment.enabled ? (
-                        <span className={s["adjustment-toggle-icon"]}>&#9863;</span>
-                      ) : (
-                        <span className={s["adjustment-toggle-icon"]}>&#9862;</span>
-                      )}
+                      {adjustment.enabled ? <EyeOff size={10} /> : <Eye size={10} />}
                     </div>
                     <div
                       className={clsx("button button-xsmall button-primary", s["adjustment-delete"])}
@@ -181,7 +178,7 @@ const BucketProjected = ({
                         deleteAdjustment(bucket, adjustment);
                       }}
                     >
-                      &#10005;
+                      <Delete size={11} />
                     </div>
                   </div>
                 </div>

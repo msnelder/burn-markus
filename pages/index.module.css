@@ -7,7 +7,7 @@
   height: 2.75rem;
   padding-left: 1.25rem;
   padding-right: 1.25rem;
-  background-color: black;
+  background-color: #151515;
 }
 
 .header-left {
@@ -41,8 +41,25 @@
   font-size: var(--font-size-xs);
 }
 
-.actions {
+.header-actions {
   display: flex;
+  align-items: center;
+  column-gap: 0.5rem;
+}
+
+.header-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.75rem;
+  width: 1.75rem;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid transparent;
+}
+.header-avatar:hover {
+  cursor: pointer;
+  border: 2px solid var(--gray-700);
 }
 
 /* =================================== */

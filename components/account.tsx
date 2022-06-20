@@ -1,11 +1,21 @@
 import { useState, useEffect } from "react";
+import Avatar from "boring-avatars";
 import { supabase } from "../utils/supabase-client";
+import s from "./account.module.css";
 
-export default function UserAccount({ session }) {
+const UserAccount = ({
+  session,
+  userAccountOpen,
+  setUserAccountOpen,
+}: {
+  session: any;
+  userAccountOpen: boolean;
+  setUserAccountOpen: (value: boolean) => void;
+}) => {
   const [loading, setLoading] = useState(true);
-  const [username, setUsername] = useState(null);
+  const [firstName, setFirstName] = useState(null);
+  const [lastName, setLastName] = useState(null);
   const [website, setWebsite] = useState(null);
-  const [avatar_url, setAvatarUrl] = useState(null);
 
   useEffect(() => {
     getProfile();
@@ -18,7 +28,7 @@ export default function UserAccount({ session }) {
 
       let { data, error, status } = await supabase
         .from("profiles")
-        .select(`username, website, avatar_url`)
+        .select(`first_name, last_name, website`)
         .eq("id", user.id)
         .single();
 
@@ -27,9 +37,9 @@ export default function UserAccount({ session }) {
       }
 
       if (data) {
-        setUsername(data.username);
+        setFirstName(data.first_name);
+        setLastName(data.last_name);
         setWebsite(data.website);
-        setAvatarUrl(data.avatar_url);
       }
     } catch (error) {
       alert(error.message);
@@ -38,16 +48,16 @@ export default function UserAccount({ session }) {
     }
   }
 
-  async function updateProfile({ username, website, avatar_url }) {
+  async function updateProfile({ firstName, lastName, website }) {
     try {
       setLoading(true);
       const user = supabase.auth.user();
 
       const updates = {
         id: user.id,
-        username,
-        website,
-        avatar_url,
+        first_name: firstName,
+        last_name: lastName,
+        website: website,
         updated_at: new Date(),
       };
 
@@ -66,45 +76,59 @@ export default function UserAccount({ session }) {
   }
 
   return (
-    <div className="form-widget">
-      <div>
-        <label htmlFor="email">Email</label>
-        <input id="email" type="text" value={session.user.email} disabled />
-      </div>
-      <div>
-        <label htmlFor="username">Name</label>
-        <input
-          id="username"
-          type="text"
-          value={username || ""}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-      </div>
-      <div>
-        <label htmlFor="website">Website</label>
-        <input
-          id="website"
-          type="website"
-          value={website || ""}
-          onChange={(e) => setWebsite(e.target.value)}
-        />
-      </div>
+    <div className="overlay" onClick={(e) => setUserAccountOpen(!userAccountOpen)}>
+      <div className={s["modal"]} onClick={(e) => e.stopPropagation()}>
+        <div className={s["header"]}>
+          <Avatar
+            size={40}
+            name={session.user.email}
+            variant="marble"
+            colors={["#E7EDEA", "#FFC52C", "#FB0D06", "#030D4F", "#CEECEF"]}
+          />
+          <div className={s["actions"]}>
+            <button className="button button-block button-danger" onClick={() => supabase.auth.signOut()}>
+              Sign Out
+            </button>
+          </div>
+        </div>
+        <div className="input-group">
+          <input id="email" type="text" value={session.user.email} disabled />
 
-      <div>
-        <button
-          className="button block primary"
-          onClick={() => updateProfile({ username, website, avatar_url })}
-          disabled={loading}
-        >
-          {loading ? "Loading ..." : "Update"}
-        </button>
-      </div>
+          <input
+            id="first-name"
+            type="text"
+            value={firstName || ""}
+            placeholder="Your First Name"
+            onChange={(e) => setFirstName(e.target.value)}
+          />
 
-      <div>
-        <button className="button block" onClick={() => supabase.auth.signOut()}>
-          Sign Out
-        </button>
+          <input
+            id="last-name"
+            type="text"
+            value={lastName || ""}
+            placeholder="Your Last Name"
+            onChange={(e) => setLastName(e.target.value)}
+          />
+
+          <input
+            id="website"
+            type="website"
+            value={website || ""}
+            placeholder="https://website.site"
+            onChange={(e) => setWebsite(e.target.value)}
+          />
+
+          <button
+            className="button button-block button-primary"
+            onClick={() => updateProfile({ firstName, lastName, website })}
+            disabled={loading}
+          >
+            {loading ? "Loading ..." : "Update"}
+          </button>
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default UserAccount;

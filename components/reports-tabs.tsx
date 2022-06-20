@@ -2,6 +2,7 @@ import { Report } from "../types/types";
 import s from "./report-tabs.module.css";
 import clsx from "clsx";
 import { createReport } from "../lib/burn/reports";
+import { File, FileText, Plus, PlusCircle, Terminal, X } from "react-feather";
 
 const ReportTabs = ({
   reports,
@@ -36,11 +37,11 @@ const ReportTabs = ({
   return (
     <div className={s["tabs"]}>
       <div
-        className={clsx(s["tab-square"], s["tab-icon"], {
+        className={clsx(s["tab-square"], {
           [s["active"]]: false,
         })}
       >
-        &#10061;
+        <Terminal size={18} />
       </div>
 
       {reports.map((report: Report) => (
@@ -51,7 +52,7 @@ const ReportTabs = ({
           onClick={(e) => setActiveReport(report)}
           key={report.id}
         >
-          <span className={s["tab-icon"]}>&#10065;</span>
+          <FileText size={18} />
           <span>{report.name}</span>
           <div
             className={s["tab-delete"]}
@@ -60,7 +61,7 @@ const ReportTabs = ({
               deleteReport(report);
             }}
           >
-            &#10005;
+            <X size={12} color={"currentColor"} />
           </div>
         </div>
       ))}
@@ -75,7 +76,9 @@ const ReportTabs = ({
           setReports(newReports);
         }}
       >
-        <div className={s["tab-add-button"]}>&#10158;</div>
+        <div className={s["tab-add-button"]}>
+          <Plus size={18} />
+        </div>
         New Model
       </div>
     </div>
