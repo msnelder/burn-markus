@@ -20,8 +20,6 @@ import BucketProjected from "../components/bucket-projected";
 import Avatar from "boring-avatars";
 
 export async function getStaticProps() {
-  const session = supabase.auth.session();
-
   const initialReportsData = await fetchReports().then((reportsData: Report[]) => {
     return reportsData;
   });
@@ -42,6 +40,14 @@ export default function Home({ initialReports }) {
   const [historicalBuckets, setHistoricalBuckets] = useState<Bucket[] | null>(null);
   const [adjustments, setAdjustments] = useSessionStorage("adjustments", null);
   const [reports, setReports] = useState<Report[] | null>(JSON.parse(initialReports));
+
+  /* TODO:
+    - [ ] Move to supabase
+    - [ ] Deleting related adjustments on report delete
+    - [ ] Disconnect bank account
+    ===== Future State
+    - [ ] Move to reducers
+    */
 
   const sumAccountBalances = (accounts: Account[], transactions: Transaction[]) => {
     let balances: number[] = [];
@@ -76,7 +82,7 @@ export default function Home({ initialReports }) {
   }, [historicalBuckets, adjustments, reports]);
 
   useEffect(() => {
-    // setSession();
+    setSession(supabase.auth.session());
 
     supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
