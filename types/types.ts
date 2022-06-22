@@ -75,10 +75,11 @@ export type Bucket = {
 };
 
 export type Report = {
-  id: string;
-  created_at: Date;
-  name: string;
-  projected_months: number;
-  expense_projecion: string;
-  active: boolean;
+  id?: string;
+  created_at?: Date;
+  name?: string;
+  projected_months?: number;
+  expense_projection?: string;
+  active?: boolean;
+  created_by: string;
 };

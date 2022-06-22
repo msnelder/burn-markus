@@ -6,7 +6,7 @@ import { sumArray } from "../utils/math";
 import { useSessionStorage } from "../lib/hooks/useSessionStorage";
 import { getTransactions } from "../lib/plaid/transactions";
 import { getHistoricalBuckets, getProjectedBuckets } from "../lib/burn/buckets";
-import { createReport, getActiveReport, getReports } from "../lib/burn/reports";
+import { createReport, getActiveReport, fetchReports } from "../lib/burn/reports";
 import { getTransactionAmounts } from "../lib/burn/transactions";
 import { supabase } from "../utils/supabase-client";
 import Auth from "../components/auth";
@@ -19,7 +19,20 @@ import BucketHistorical from "../components/bucket-historical";
 import BucketProjected from "../components/bucket-projected";
 import Avatar from "boring-avatars";
 
-export default function Home() {
+export async function getStaticProps() {
+  const session = supabase.auth.session();
+
+  const initialReportsData = await fetchReports().then((reportsData: Report[]) => {
+    return reportsData;
+  });
+  const initialReports: string = JSON.stringify(initialReportsData);
+
+  return {
+    props: { initialReports }, // will be passed to the page component as props
+  };
+}
+
+export default function Home({ initialReports }) {
   const [session, setSession] = useState(null);
   const [userAccountOpen, setUserAccountOpen] = useState<boolean | null>(false);
   const [accessToken, setAccessToken] = useSessionStorage("access_token", null);
@@ -28,15 +41,7 @@ export default function Home() {
   const [transactions, setTransactions] = useState<Transaction[] | null>(null);
   const [historicalBuckets, setHistoricalBuckets] = useState<Bucket[] | null>(null);
   const [adjustments, setAdjustments] = useSessionStorage("adjustments", null);
-  const [reports, setReports] = useSessionStorage("reports", null);
-
-  /* TODO:
-    - [ ] Move to supabase
-    - [ ] Deleting related adjustments on report delete
-    - [ ] Disconnect bank account
-    ===== Future State
-    - [ ] Move to reducers
-    */
+  const [reports, setReports] = useState<Report[] | null>(JSON.parse(initialReports));
 
   const sumAccountBalances = (accounts: Account[], transactions: Transaction[]) => {
     let balances: number[] = [];
@@ -71,7 +76,7 @@ export default function Home() {
   }, [historicalBuckets, adjustments, reports]);
 
   useEffect(() => {
-    setSession(supabase.auth.session());
+    // setSession();
 
     supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
@@ -97,14 +102,8 @@ export default function Home() {
   }, [transactions]); // <-- dependency array
 
   useEffect(() => {
-    if (session) {
-      getReports();
-    }
     if (!reports || reports.length === 0) {
-      let newReport = createReport();
-      let newReports: Report[] = [newReport];
-
-      setReports(newReports);
+      createReport(reports, setReports);
     }
   }, [reports]); // <-- dependency array
 

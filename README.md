@@ -2,7 +2,11 @@ Burn is a simple app to tell you when your business will run out of money.
 
 Features we're working on:
 
-- [ ] Storing everything in a database
+- [ ] Figure out how to use session with static render or choose different approach for loading the initial reports
+- [ ] Move adjustments to the DB
+- [ ] Fix the RLS rules in supabase for security
+- [ ] Delete related adjustments on report delete
+- [ ] Disconnect a bank account
 - [ ] Organizations
 - [ ] Multi-tenancy
 - [ ] Repeatable adjustments
